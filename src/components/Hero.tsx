@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Search } from "lucide-react";
 import { useHeroSettings } from "@/hooks/useHeroSettings";
 import { useFacebookPixel } from "@/hooks/useFacebookPixel";
@@ -7,7 +8,7 @@ import heroImage from "@/assets/hero-rental.jpg";
 
 const Hero = () => {
   const [searchQuery, setSearchQuery] = useState("");
-  const { settings } = useHeroSettings();
+  const { settings, loading } = useHeroSettings();
   const { trackEvent } = useFacebookPixel();
 
   const handleSearch = () => {
@@ -28,6 +29,27 @@ const Hero = () => {
   };
 
   const backgroundImage = settings.background_image_url || heroImage;
+
+  if (loading) {
+    return (
+      <section className="relative min-h-[85vh] flex items-center overflow-hidden bg-muted">
+        <div className="absolute inset-0 z-0">
+          <Skeleton className="w-full h-full" />
+        </div>
+        <div className="container mx-auto px-4 relative z-10">
+          <div className="flex justify-end">
+            <div className="bg-background/95 backdrop-blur-sm rounded-2xl p-8 md:p-12 max-w-lg w-full shadow-[var(--shadow-soft)]">
+              <Skeleton className="h-12 w-3/4 mb-4" />
+              <Skeleton className="h-6 w-full mb-2" />
+              <Skeleton className="h-6 w-2/3 mb-6" />
+              <Skeleton className="h-12 w-full mb-6 rounded-lg" />
+              <Skeleton className="h-4 w-1/2" />
+            </div>
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="relative min-h-[85vh] flex items-center overflow-hidden">
