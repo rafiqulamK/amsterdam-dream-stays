@@ -2,11 +2,12 @@ import { Mail, Phone } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useContactSettings } from '@/hooks/useContactSettings';
 import { useFacebookPixel } from '@/hooks/useFacebookPixel';
-import logoLight from '@/assets/logo-light.png';
+import { useBrandingSettings } from '@/hooks/useBrandingSettings';
 
 const Footer = () => {
   const { settings: contact } = useContactSettings();
   const { trackEvent } = useFacebookPixel();
+  const { settings: branding } = useBrandingSettings();
 
   const handleContactClick = (type: string) => {
     trackEvent('Contact', {
@@ -15,6 +16,9 @@ const Footer = () => {
     });
   };
 
+  // Footer typically has dark background, so use dark mode logo (light colored)
+  const footerLogo = branding.darkModeLogo;
+
   return (
     <footer className="py-12 bg-primary text-primary-foreground">
       <div className="container mx-auto px-4">
@@ -22,11 +26,15 @@ const Footer = () => {
           {/* Logo & Tagline */}
           <div className="space-y-4">
             <Link to="/">
-              <img 
-                src={logoLight} 
-                alt={contact.company_name}
-                className="h-8 w-auto"
-              />
+              {footerLogo ? (
+                <img 
+                  src={footerLogo} 
+                  alt="Hause"
+                  className="h-8 w-auto"
+                />
+              ) : (
+                <span className="text-2xl font-bold text-primary-foreground">Hause</span>
+              )}
             </Link>
             <p className="text-sm text-primary-foreground/80">
               Find your next home in the Netherlands with verified landlords and quality rentals.
