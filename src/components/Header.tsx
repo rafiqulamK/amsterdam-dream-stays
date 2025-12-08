@@ -5,14 +5,15 @@ import { Input } from "@/components/ui/input";
 import { Menu, X, Search, User } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import ThemeToggle from "@/components/ThemeToggle";
-import hausLogo from "@/assets/haus-logo.png";
 import { useTheme } from "@/contexts/ThemeContext";
+import { useBrandingSettings } from "@/hooks/useBrandingSettings";
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const location = useLocation();
   const { user, userRole } = useAuth();
   const { theme } = useTheme();
+  const { settings: branding } = useBrandingSettings();
 
   const navLinks = [
     { name: "Frontpage", path: "/" },
@@ -26,17 +27,23 @@ const Header = () => {
     return location.pathname + location.hash === path;
   };
 
+  const currentLogo = theme === 'dark' ? branding.darkModeLogo : branding.lightModeLogo;
+
   return (
     <header className="sticky top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-sm border-b border-border">
       <nav className="container mx-auto px-4 py-3">
         <div className="flex items-center justify-between gap-4">
           {/* Logo */}
           <Link to="/" className="shrink-0">
-            <img 
-              src={hausLogo} 
-              alt="Haus" 
-              className={`h-8 w-auto ${theme === 'dark' ? 'invert' : ''}`}
-            />
+            {currentLogo ? (
+              <img 
+                src={currentLogo} 
+                alt="Hause" 
+                className="h-8 w-auto transition-opacity duration-200"
+              />
+            ) : (
+              <span className="text-2xl font-bold text-foreground">Hause</span>
+            )}
           </Link>
 
           {/* Search Bar - Desktop */}

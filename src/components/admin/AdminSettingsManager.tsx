@@ -1,5 +1,5 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Image, Star, LayoutGrid, Search, Mail, Phone, Activity, FormInput, FileText, Users, Share2, ImageIcon, BarChart3 } from 'lucide-react';
+import { Image, Star, LayoutGrid, Search, Mail, Phone, Activity, FormInput, FileText, Users, Share2, ImageIcon, BarChart3, Palette } from 'lucide-react';
 import HeroSectionEditor from './HeroSectionEditor';
 import FeaturedPropertiesPicker from './FeaturedPropertiesPicker';
 import SectionVisibilityManager from './SectionVisibilityManager';
@@ -13,12 +13,17 @@ import CMSPagesManager from './CMSPagesManager';
 import UserRolesManager from './UserRolesManager';
 import SocialLinksEditor from './SocialLinksEditor';
 import MediaLibraryManager from './MediaLibraryManager';
+import BrandingSettingsEditor from './BrandingSettingsEditor';
 
 const AdminSettingsManager = () => {
   return (
     <div className="space-y-6">
-      <Tabs defaultValue="hero" className="w-full">
+      <Tabs defaultValue="branding" className="w-full">
         <TabsList className="flex flex-wrap h-auto gap-1 p-1">
+          <TabsTrigger value="branding" className="flex items-center gap-1">
+            <Palette className="h-4 w-4" />
+            <span className="hidden sm:inline">Branding</span>
+          </TabsTrigger>
           <TabsTrigger value="hero" className="flex items-center gap-1">
             <Image className="h-4 w-4" />
             <span className="hidden sm:inline">Hero</span>
@@ -72,6 +77,10 @@ const AdminSettingsManager = () => {
             <span className="hidden sm:inline">Users</span>
           </TabsTrigger>
         </TabsList>
+
+        <TabsContent value="branding" className="mt-6">
+          <BrandingSettingsEditor />
+        </TabsContent>
 
         <TabsContent value="hero" className="mt-6">
           <HeroSectionEditor />
