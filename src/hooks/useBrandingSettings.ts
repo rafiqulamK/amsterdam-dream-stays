@@ -1,15 +1,17 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import hauseLogoDark from '@/assets/hause-logo-dark.png';
+import hauseLogoWhite from '@/assets/hause-logo-white.png';
 
 interface BrandingSettings {
-  lightModeLogo: string | null;
-  darkModeLogo: string | null;
+  lightModeLogo: string;
+  darkModeLogo: string;
 }
 
 export const useBrandingSettings = () => {
   const [settings, setSettings] = useState<BrandingSettings>({
-    lightModeLogo: null,
-    darkModeLogo: null,
+    lightModeLogo: hauseLogoDark,
+    darkModeLogo: hauseLogoWhite,
   });
   const [isLoading, setIsLoading] = useState(true);
 
@@ -24,8 +26,8 @@ export const useBrandingSettings = () => {
       if (!error && data?.setting_value) {
         const value = data.setting_value as Record<string, string>;
         setSettings({
-          lightModeLogo: value.lightModeLogo || null,
-          darkModeLogo: value.darkModeLogo || null,
+          lightModeLogo: value.lightModeLogo || hauseLogoDark,
+          darkModeLogo: value.darkModeLogo || hauseLogoWhite,
         });
       }
       setIsLoading(false);
@@ -48,8 +50,8 @@ export const useBrandingSettings = () => {
           if (payload.new && 'setting_value' in payload.new) {
             const value = payload.new.setting_value as Record<string, string>;
             setSettings({
-              lightModeLogo: value.lightModeLogo || null,
-              darkModeLogo: value.darkModeLogo || null,
+              lightModeLogo: value.lightModeLogo || hauseLogoDark,
+              darkModeLogo: value.darkModeLogo || hauseLogoWhite,
             });
           }
         }

@@ -16,54 +16,50 @@ const Footer = () => {
     });
   };
 
-  // Footer typically has dark background, so use dark mode logo (light colored)
+  // Footer always uses white logo (dark mode logo) regardless of theme
   const footerLogo = branding.darkModeLogo;
 
   return (
-    <footer className="py-12 bg-primary text-primary-foreground">
+    <footer className="py-12 bg-[#1a1a2e] text-white">
       <div className="container mx-auto px-4">
         <div className="grid md:grid-cols-3 gap-8 mb-8">
           {/* Logo & Tagline */}
           <div className="space-y-4">
             <Link to="/">
-              {footerLogo ? (
-                <img 
-                  src={footerLogo} 
-                  alt="Hause"
-                  className="h-8 w-auto"
-                />
-              ) : (
-                <span className="text-2xl font-bold text-primary-foreground">Hause</span>
-              )}
+              <img 
+                src={footerLogo} 
+                alt="Hause"
+                className="h-8 w-auto"
+              />
             </Link>
-            <p className="text-sm text-primary-foreground/80">
+            <p className="text-sm text-white/80">
               Find your next home in the Netherlands with verified landlords and quality rentals.
             </p>
           </div>
 
           {/* Useful Links */}
           <div className="space-y-4">
-            <h3 className="text-sm font-semibold uppercase tracking-wider">Useful Links</h3>
+            <h3 className="text-sm font-semibold uppercase tracking-wider text-white">Useful Links</h3>
             <nav className="flex flex-col gap-2 text-sm">
-              <Link to="/" className="text-primary-foreground/80 hover:text-primary-foreground transition-colors">
+              <Link to="/" className="text-white/80 hover:text-white transition-colors">
                 Frontpage
               </Link>
-              <Link to="/#properties" className="text-primary-foreground/80 hover:text-primary-foreground transition-colors">
+              <Link to="/#properties" className="text-white/80 hover:text-white transition-colors">
                 Find rental properties
               </Link>
-              <Link to="/page/privacy" className="text-primary-foreground/80 hover:text-primary-foreground transition-colors">
+              <Link to="/page/privacy" className="text-white/80 hover:text-white transition-colors">
                 Privacy policy
               </Link>
-              <Link to="/#contact" className="text-primary-foreground/80 hover:text-primary-foreground transition-colors">
+              <Link to="/#contact" className="text-white/80 hover:text-white transition-colors">
                 Contact us
               </Link>
-              <Link to="/page/subscription-terms" className="text-primary-foreground/80 hover:text-primary-foreground transition-colors">
+              <Link to="/page/subscription-terms" className="text-white/80 hover:text-white transition-colors">
                 Subscription terms
               </Link>
-              <Link to="/page/terms" className="text-primary-foreground/80 hover:text-primary-foreground transition-colors">
+              <Link to="/page/terms" className="text-white/80 hover:text-white transition-colors">
                 Terms and Conditions
               </Link>
-              <Link to="/auth" className="text-primary-foreground/80 hover:text-primary-foreground transition-colors">
+              <Link to="/auth" className="text-white/80 hover:text-white transition-colors">
                 Log in
               </Link>
             </nav>
@@ -71,11 +67,11 @@ const Footer = () => {
 
           {/* Contact Us */}
           <div className="space-y-4">
-            <h3 className="text-sm font-semibold uppercase tracking-wider">Contact Us</h3>
+            <h3 className="text-sm font-semibold uppercase tracking-wider text-white">Contact Us</h3>
             <div className="space-y-3 text-sm">
               <a 
                 href={`mailto:${contact.email}`} 
-                className="flex items-center gap-2 text-primary-foreground/80 hover:text-primary-foreground transition-colors"
+                className="flex items-center gap-2 text-white/80 hover:text-white transition-colors"
                 onClick={() => handleContactClick('email')}
               >
                 <Mail className="w-4 h-4" />
@@ -83,7 +79,7 @@ const Footer = () => {
               </a>
               <a 
                 href={`tel:${contact.phone}`} 
-                className="flex items-center gap-2 text-primary-foreground/80 hover:text-primary-foreground transition-colors"
+                className="flex items-center gap-2 text-white/80 hover:text-white transition-colors"
                 onClick={() => handleContactClick('phone')}
               >
                 <Phone className="w-4 h-4" />
@@ -94,7 +90,7 @@ const Footer = () => {
         </div>
 
         {/* Copyright */}
-        <div className="pt-8 border-t border-primary-foreground/20 text-center text-primary-foreground/60 text-sm">
+        <div className="pt-8 border-t border-white/20 text-center text-white/60 text-sm">
           <p>© {new Date().getFullYear()} {contact.company_name}. All rights reserved.</p>
         </div>
       </div>
