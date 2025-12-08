@@ -35,15 +35,11 @@ const Header = () => {
         <div className="flex items-center justify-between gap-4">
           {/* Logo */}
           <Link to="/" className="shrink-0">
-            {currentLogo ? (
-              <img 
-                src={currentLogo} 
-                alt="Hause" 
-                className="h-8 w-auto transition-opacity duration-200"
-              />
-            ) : (
-              <span className="text-2xl font-bold text-foreground">Hause</span>
-            )}
+            <img 
+              src={currentLogo} 
+              alt="Hause" 
+              className="h-8 w-auto transition-opacity duration-200"
+            />
           </Link>
 
           {/* Search Bar - Desktop */}
