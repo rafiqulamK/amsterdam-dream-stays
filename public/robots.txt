@@ -20,5 +20,5 @@ Disallow: /auth
 Disallow: /tenant
 Disallow: /tenant/*
 
-# Sitemap location (haus.online domain)
-Sitemap: https://haus.online/sitemap.xml
+# Sitemap location (hause.ink domain)
+Sitemap: https://hause.ink/sitemap.xml

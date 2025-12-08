@@ -6,7 +6,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const SITE_URL = "https://haus.online";
+const SITE_URL = "https://hause.ink";
 
 const handler = async (req: Request): Promise<Response> => {
   console.log("Sitemap function called");

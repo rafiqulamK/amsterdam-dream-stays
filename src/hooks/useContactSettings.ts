@@ -14,12 +14,12 @@ export interface ContactSettings {
 }
 
 const defaultContactSettings: ContactSettings = {
-  company_name: 'Haus.online',
+  company_name: 'Hause',
   address: 'Wamelplein 68',
   city: '1106 Amsterdam',
   country: 'Netherlands',
   phone: '+31 20 123 4567',
-  email: 'info@haus.online',
+  email: 'info@hause.ink',
   whatsapp_enabled: false,
   whatsapp_number: '',
   business_hours: 'Mon-Fri: 9:00 - 18:00'

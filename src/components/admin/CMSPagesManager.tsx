@@ -368,7 +368,7 @@ const CMSPagesManager = () => {
                       id="meta_title"
                       value={formData.meta_title}
                       onChange={(e) => setFormData({ ...formData, meta_title: e.target.value })}
-                      placeholder="Page Title | Haus.online"
+                      placeholder="Page Title | Hause"
                       maxLength={60}
                     />
                     <p className="text-xs text-muted-foreground mt-1">

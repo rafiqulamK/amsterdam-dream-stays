@@ -25,7 +25,7 @@ const BlogPage = () => {
   const { trackEvent } = useFacebookPixel();
 
   useEffect(() => {
-    document.title = 'News & Updates | Haus.online';
+    document.title = 'News & Updates | Hause';
     
     trackEvent('ViewContent', {
       content_name: 'Blog Page',
