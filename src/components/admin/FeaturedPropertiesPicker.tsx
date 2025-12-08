@@ -29,7 +29,7 @@ const FeaturedPropertiesPicker = () => {
   const fetchData = async () => {
     const [propertiesRes, settingsRes] = await Promise.all([
       supabase.from('properties').select('id, title, city, price, status, images').eq('status', 'approved'),
-      supabase.from('site_settings').select('setting_value').eq('setting_key', 'featured_properties').single()
+      supabase.from('site_settings').select('setting_value').eq('setting_key', 'featured_properties').maybeSingle()
     ]);
 
     if (propertiesRes.data) {

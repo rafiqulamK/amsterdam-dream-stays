@@ -64,7 +64,7 @@ const LeadFormConfigManager = () => {
       .from('site_settings')
       .select('setting_value')
       .eq('setting_key', 'lead_form_config')
-      .single();
+      .maybeSingle();
 
     if (data?.setting_value) {
       const value = data.setting_value as unknown as { value: LeadFormConfig };
