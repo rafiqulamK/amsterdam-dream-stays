@@ -52,7 +52,7 @@ const SectionVisibilityManager = () => {
       .from('site_settings')
       .select('setting_value')
       .eq('setting_key', 'section_visibility')
-      .single();
+      .maybeSingle();
 
     if (data?.setting_value) {
       const value = data.setting_value as unknown as { value: SectionVisibility };

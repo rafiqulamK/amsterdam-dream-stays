@@ -37,7 +37,7 @@ const GoogleAnalyticsSettings = () => {
       .from('site_settings')
       .select('setting_value')
       .eq('setting_key', 'google_analytics')
-      .single();
+      .maybeSingle();
 
     if (data?.setting_value) {
       const value = data.setting_value as unknown as { value: GASettings };

@@ -46,7 +46,7 @@ const SEOSettingsEditor = () => {
       .from('site_settings')
       .select('setting_value')
       .eq('setting_key', 'seo_settings')
-      .single();
+      .maybeSingle();
 
     if (data?.setting_value) {
       const value = data.setting_value as unknown as { value: SEOSettings };

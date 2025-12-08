@@ -54,7 +54,7 @@ const FacebookPixelSettings = () => {
       .from('site_settings')
       .select('setting_value')
       .eq('setting_key', 'facebook_pixel')
-      .single();
+      .maybeSingle();
 
     if (data?.setting_value) {
       const value = data.setting_value as unknown as { value: PixelSettings };

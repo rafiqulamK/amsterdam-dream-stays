@@ -38,7 +38,7 @@ const ContactSettingsEditor = () => {
       .from('site_settings')
       .select('setting_value')
       .eq('setting_key', 'contact_settings')
-      .single();
+      .maybeSingle();
 
     if (data?.setting_value) {
       const value = data.setting_value as unknown as { value: ContactSettings };
