@@ -5,14 +5,16 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
-import { Home, Users, Building2, MessageSquare, TrendingUp, Settings, LogOut } from 'lucide-react';
+import { Home, Users, Building2, MessageSquare, TrendingUp, Settings, LogOut, Loader2 } from 'lucide-react';
 import Header from '@/components/Header';
 import AdminPropertiesManager from '@/components/admin/AdminPropertiesManager';
 import AdminBookingsManager from '@/components/admin/AdminBookingsManager';
 import AdminLeadsManager from '@/components/admin/AdminLeadsManager';
 import AdminSettingsManager from '@/components/admin/AdminSettingsManager';
 import AdminAnalytics from '@/components/admin/AdminAnalytics';
+import PageLoader from '@/components/PageLoader';
 
 const AdminDashboard = () => {
   const { user, userRole, signOut, loading } = useAuth();
@@ -58,7 +60,11 @@ const AdminDashboard = () => {
     });
   };
 
-  if (loading || !user || userRole !== 'admin') {
+  if (loading) {
+    return <PageLoader />;
+  }
+
+  if (!user || userRole !== 'admin') {
     return null;
   }
 

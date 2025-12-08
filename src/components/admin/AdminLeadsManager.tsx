@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 
@@ -17,6 +18,7 @@ interface Lead {
 
 const AdminLeadsManager = () => {
   const [leads, setLeads] = useState<Lead[]>([]);
+  const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -32,6 +34,7 @@ const AdminLeadsManager = () => {
     if (!error) {
       setLeads(data || []);
     }
+    setLoading(false);
   };
 
   const updateStatus = async (id: string, status: string) => {
@@ -54,6 +57,34 @@ const AdminLeadsManager = () => {
       fetchLeads();
     }
   };
+
+  if (loading) {
+    return (
+      <div className="space-y-4">
+        {[1, 2, 3].map((i) => (
+          <Card key={i} className="p-6">
+            <div className="flex justify-between items-start">
+              <div className="flex-1 space-y-3">
+                <Skeleton className="h-6 w-48" />
+                <Skeleton className="h-4 w-32" />
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-16 w-full mt-4" />
+              </div>
+              <Skeleton className="h-10 w-32 ml-4" />
+            </div>
+          </Card>
+        ))}
+      </div>
+    );
+  }
+
+  if (leads.length === 0) {
+    return (
+      <Card className="p-8 text-center">
+        <p className="text-muted-foreground">No leads found</p>
+      </Card>
+    );
+  }
 
   return (
     <div className="space-y-4">

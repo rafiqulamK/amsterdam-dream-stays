@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 
@@ -20,6 +21,7 @@ interface Booking {
 
 const AdminBookingsManager = () => {
   const [bookings, setBookings] = useState<Booking[]>([]);
+  const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -35,6 +37,7 @@ const AdminBookingsManager = () => {
     if (!error) {
       setBookings(data || []);
     }
+    setLoading(false);
   };
 
   const updateStatus = async (id: string, status: string) => {
@@ -57,6 +60,39 @@ const AdminBookingsManager = () => {
       fetchBookings();
     }
   };
+
+  if (loading) {
+    return (
+      <div className="space-y-4">
+        {[1, 2, 3].map((i) => (
+          <Card key={i} className="p-6">
+            <div className="flex justify-between items-start">
+              <div className="space-y-3 flex-1">
+                <Skeleton className="h-6 w-48" />
+                <Skeleton className="h-4 w-32" />
+                <Skeleton className="h-4 w-40" />
+                <Skeleton className="h-4 w-56 mt-2" />
+                <Skeleton className="h-4 w-32" />
+                <Skeleton className="h-6 w-24 mt-2" />
+              </div>
+              <div className="flex flex-col gap-2 items-end">
+                <Skeleton className="h-6 w-20" />
+                <Skeleton className="h-8 w-24" />
+              </div>
+            </div>
+          </Card>
+        ))}
+      </div>
+    );
+  }
+
+  if (bookings.length === 0) {
+    return (
+      <Card className="p-8 text-center">
+        <p className="text-muted-foreground">No bookings found</p>
+      </Card>
+    );
+  }
 
   return (
     <div className="space-y-4">
