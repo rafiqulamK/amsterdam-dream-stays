@@ -26,7 +26,7 @@ interface EmailSettings {
 
 const defaultEmailSettings: EmailSettings = {
   admin_email: '',
-  from_name: 'Haus.online',
+  from_name: 'Hause',
   new_lead_enabled: true,
   new_booking_enabled: true,
   lead_subject_template: 'New Lead: {{name}} is interested!',
@@ -106,7 +106,7 @@ const EmailNotificationSettings = () => {
           data: {
             name: 'Test User',
             email: 'test@example.com',
-            message: 'This is a test email from Haus.online'
+            message: 'This is a test email from Hause'
           }
         }
       });
@@ -152,7 +152,7 @@ const EmailNotificationSettings = () => {
                 type="email"
                 value={settings.admin_email}
                 onChange={(e) => setSettings({ ...settings, admin_email: e.target.value })}
-                placeholder="admin@haus.online"
+                placeholder="admin@hause.ink"
               />
             </div>
             <div>
@@ -161,7 +161,7 @@ const EmailNotificationSettings = () => {
                 id="from_name"
                 value={settings.from_name}
                 onChange={(e) => setSettings({ ...settings, from_name: e.target.value })}
-                placeholder="Haus.online"
+                placeholder="Hause"
               />
             </div>
             <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">

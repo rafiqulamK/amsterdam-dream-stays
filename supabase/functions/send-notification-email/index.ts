@@ -17,8 +17,8 @@ const LOGO_URL = "https://myjfenyrbpzjzsafpwyn.supabase.co/storage/v1/object/pub
 // Fallback logo HTML (text-based) for when image doesn't load
 const getLogoHtml = () => `
   <div style="text-align: center; margin-bottom: 16px;">
-    <img src="${LOGO_URL}" alt="Haus.online" style="max-width: 150px; height: auto;" 
-         onerror="this.parentElement.innerHTML='<h2 style=\\'color: #ffffff; margin: 0; font-size: 32px; font-weight: bold;\\'>🏠 Haus.online</h2>'" />
+    <img src="${LOGO_URL}" alt="Hause" style="max-width: 150px; height: auto;" 
+         onerror="this.parentElement.innerHTML='<h2 style=\\'color: #ffffff; margin: 0; font-size: 32px; font-weight: bold;\\'>🏠 Hause</h2>'" />
   </div>
 `;
 
@@ -68,13 +68,13 @@ const getEmailTemplate = (type: string, data: Record<string, string>) => {
 
   if (type === 'test') {
     return {
-      subject: '🏠 Haus.online - Test Email',
+      subject: '🏠 Hause - Test Email',
       html: `
         <div style="${baseStyles}">
           <div style="${headerStyles}">
             ${logoHtml}
-            <h1 style="color: #ffffff; margin: 0; font-size: 28px;">Haus.online</h1>
-            <p style="color: #a0aec0; margin: 8px 0 0 0;">Premium Amsterdam Rentals</p>
+            <h1 style="color: #ffffff; margin: 0; font-size: 28px;">Hause</h1>
+            <p style="color: #a0aec0; margin: 8px 0 0 0;">Premium Netherlands Rentals</p>
           </div>
           <div style="${contentStyles}">
             <h2 style="color: #1a1a2e; margin-top: 0;">✅ Email Configuration Successful!</h2>
@@ -88,7 +88,7 @@ const getEmailTemplate = (type: string, data: Record<string, string>) => {
             <p>Your email notification system is now configured and ready to send notifications for new leads and bookings.</p>
           </div>
           <div style="${footerStyles}">
-            <p style="margin: 0;">© ${new Date().getFullYear()} Haus.online</p>
+            <p style="margin: 0;">© ${new Date().getFullYear()} Hause</p>
             <p style="margin: 8px 0 0 0;">Wamelplein 68, 1106 Amsterdam, Netherlands</p>
           </div>
         </div>
@@ -140,7 +140,7 @@ const getEmailTemplate = (type: string, data: Record<string, string>) => {
             </div>
           </div>
           <div style="${footerStyles}">
-            <p style="margin: 0;">© ${new Date().getFullYear()} Haus.online</p>
+            <p style="margin: 0;">© ${new Date().getFullYear()} Hause</p>
             <p style="margin: 8px 0 0 0;">Wamelplein 68, 1106 Amsterdam, Netherlands</p>
           </div>
         </div>
@@ -150,13 +150,13 @@ const getEmailTemplate = (type: string, data: Record<string, string>) => {
 
   if (type === 'user_confirmation') {
     return {
-      subject: `✅ Thank you for your application - Haus.online`,
+      subject: `✅ Thank you for your application - Hause`,
       html: `
         <div style="${baseStyles}">
           <div style="${headerStyles}">
             ${logoHtml}
-            <h1 style="color: #ffffff; margin: 0; font-size: 28px;">Haus.online</h1>
-            <p style="color: #a0aec0; margin: 8px 0 0 0;">Premium Amsterdam Rentals</p>
+            <h1 style="color: #ffffff; margin: 0; font-size: 28px;">Hause</h1>
+            <p style="color: #a0aec0; margin: 8px 0 0 0;">Premium Netherlands Rentals</p>
           </div>
           <div style="${contentStyles}">
             <h2 style="color: #1a1a2e; margin-top: 0;">Thank You, ${data.name || 'Valued Customer'}!</h2>
@@ -195,16 +195,16 @@ const getEmailTemplate = (type: string, data: Record<string, string>) => {
             </div>
             
             <div style="text-align: center; margin-top: 32px;">
-              <a href="https://haus.online" style="${buttonStyles}">Browse More Properties</a>
+              <a href="https://hause.ink" style="${buttonStyles}">Browse More Properties</a>
             </div>
             
             <p style="color: #64748b; font-size: 14px; margin-top: 24px;">
               If you have any questions, feel free to reply to this email or contact us at 
-              <a href="mailto:info@haus.online" style="color: #1a1a2e;">info@haus.online</a>
+              <a href="mailto:info@hause.ink" style="color: #1a1a2e;">info@hause.ink</a>
             </p>
           </div>
           <div style="${footerStyles}">
-            <p style="margin: 0;">© ${new Date().getFullYear()} Haus.online</p>
+            <p style="margin: 0;">© ${new Date().getFullYear()} Hause</p>
             <p style="margin: 8px 0 0 0;">Wamelplein 68, 1106 Amsterdam, Netherlands</p>
             <p style="margin: 8px 0 0 0; font-size: 12px; color: #94a3b8;">
               You received this email because you submitted an application on our website.
@@ -254,11 +254,11 @@ const getEmailTemplate = (type: string, data: Record<string, string>) => {
             </div>
             
             <div style="text-align: center; margin-top: 32px;">
-              <a href="https://haus.online/admin" style="${buttonStyles}">View in Dashboard</a>
+              <a href="https://hause.ink/admin" style="${buttonStyles}">View in Dashboard</a>
             </div>
           </div>
           <div style="${footerStyles}">
-            <p style="margin: 0;">© ${new Date().getFullYear()} Haus.online</p>
+            <p style="margin: 0;">© ${new Date().getFullYear()} Hause</p>
             <p style="margin: 8px 0 0 0;">Wamelplein 68, 1106 Amsterdam, Netherlands</p>
           </div>
         </div>
@@ -266,7 +266,7 @@ const getEmailTemplate = (type: string, data: Record<string, string>) => {
     };
   }
 
-  return { subject: 'Haus.online Notification', html: '<p>Notification</p>' };
+  return { subject: 'Hause Notification', html: '<p>Notification</p>' };
 };
 
 const handler = async (req: Request): Promise<Response> => {
@@ -311,7 +311,7 @@ const handler = async (req: Request): Promise<Response> => {
         Authorization: `Bearer ${RESEND_API_KEY}`,
       },
       body: JSON.stringify({
-        from: "Haus.online <onboarding@resend.dev>",
+        from: "Hause <onboarding@resend.dev>",
         to: [to],
         subject: template.subject,
         html: template.html,

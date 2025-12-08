@@ -46,7 +46,7 @@ const CMSPage = () => {
         setPage(data);
         
         // Update document title and meta tags
-        const pageTitle = data.meta_title || `${data.title} | Haus.online`;
+        const pageTitle = data.meta_title || `${data.title} | Hause`;
         document.title = pageTitle;
         
         // Update OG meta tags for Facebook sharing

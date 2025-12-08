@@ -103,7 +103,7 @@ const SEOSettingsEditor = () => {
                 id="meta_title"
                 value={seo.meta_title}
                 onChange={(e) => setSeo({ ...seo, meta_title: e.target.value })}
-                placeholder="Haus.online - Premium Amsterdam Rentals"
+                placeholder="Hause - Premium Netherlands Rentals"
                 maxLength={60}
               />
               <p className="text-xs text-muted-foreground mt-1">
@@ -138,7 +138,7 @@ const SEOSettingsEditor = () => {
                 id="canonical_url"
                 value={seo.canonical_url}
                 onChange={(e) => setSeo({ ...seo, canonical_url: e.target.value })}
-                placeholder="https://haus.online"
+                placeholder="https://hause.ink"
               />
             </div>
           </TabsContent>
@@ -154,7 +154,7 @@ const SEOSettingsEditor = () => {
                 id="og_title"
                 value={seo.og_title}
                 onChange={(e) => setSeo({ ...seo, og_title: e.target.value })}
-                placeholder="Haus.online - Find Your Home"
+                placeholder="Hause - Find Your Home"
               />
             </div>
             <div>
@@ -172,7 +172,7 @@ const SEOSettingsEditor = () => {
                 id="og_image"
                 value={seo.og_image}
                 onChange={(e) => setSeo({ ...seo, og_image: e.target.value })}
-                placeholder="https://haus.online/og-image.jpg"
+                placeholder="https://hause.ink/og-image.jpg"
               />
             </div>
             <div>

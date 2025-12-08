@@ -233,7 +233,7 @@ const LeadQuestionnaireDialog = ({ open, onOpenChange, property }: LeadQuestionn
       supabase.functions.invoke('send-notification-email', {
         body: {
           type: 'lead',
-          to: 'admin@haus.online',
+          to: 'admin@hause.ink',
           data: {
             name: fullName,
             email: userEmail,

@@ -90,7 +90,7 @@ const ContactSettingsEditor = () => {
               type="email"
               value={settings.contact_email}
               onChange={(e) => setSettings({ ...settings, contact_email: e.target.value })}
-              placeholder="info@haus.online"
+              placeholder="info@hause.ink"
             />
           </div>
           <div>
