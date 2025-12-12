@@ -1,6 +1,7 @@
 import { ReactNode, useEffect, useState } from 'react';
 import { useScrollTrigger } from '@/hooks/useScrollTrigger';
 import { cn } from '@/lib/utils';
+import { useHaptics } from '@/hooks/useHaptics';
 
 interface RoomWalkthroughProps {
   children: ReactNode;
@@ -19,12 +20,14 @@ const RoomWalkthrough = ({
 }: RoomWalkthroughProps) => {
   const { ref, isVisible, progress } = useScrollTrigger({ threshold: 0.15, triggerOnce: false });
   const [hasEntered, setHasEntered] = useState(false);
+  const { trigger } = useHaptics();
 
   useEffect(() => {
     if (isVisible && !hasEntered) {
       setHasEntered(true);
+      trigger('roomEnter');
     }
-  }, [isVisible, hasEntered]);
+  }, [isVisible, hasEntered, trigger]);
 
   // Calculate parallax and 3D effects based on scroll progress
   const perspectiveProgress = Math.min(progress * 1.5, 1);
@@ -34,7 +37,7 @@ const RoomWalkthrough = ({
     <div
       ref={ref}
       className={cn(
-        'relative min-h-screen overflow-hidden',
+        'relative overflow-hidden',
         className
       )}
       style={{ perspective: '2000px' }}
@@ -42,7 +45,7 @@ const RoomWalkthrough = ({
       {/* Corridor walls effect */}
       <div
         className={cn(
-          'absolute inset-0 pointer-events-none transition-all duration-700',
+          'absolute inset-0 pointer-events-none transition-all duration-1000',
           hasEntered ? 'opacity-0' : 'opacity-100'
         )}
         style={{
@@ -60,7 +63,7 @@ const RoomWalkthrough = ({
       {/* Floor perspective lines */}
       <div
         className={cn(
-          'absolute inset-x-0 bottom-0 h-32 pointer-events-none transition-all duration-1000',
+          'absolute inset-x-0 bottom-0 h-32 pointer-events-none transition-all duration-1500',
           hasEntered ? 'opacity-0 translate-y-20' : 'opacity-40'
         )}
         style={{
@@ -81,7 +84,7 @@ const RoomWalkthrough = ({
       {/* Room entrance frame */}
       <div
         className={cn(
-          'absolute inset-0 z-10 pointer-events-none transition-all duration-1000',
+          'absolute inset-0 z-10 pointer-events-none transition-all duration-1500',
           hasEntered ? 'opacity-0 scale-110' : 'opacity-100 scale-100'
         )}
       >
@@ -109,13 +112,13 @@ const RoomWalkthrough = ({
         />
       </div>
 
-      {/* Room number indicator */}
+      {/* Room number indicator - floating badge */}
       <div
         className={cn(
           'absolute top-8 left-1/2 -translate-x-1/2 z-30',
           'flex items-center gap-3 px-6 py-3 rounded-full',
           'bg-background/80 backdrop-blur-xl border border-border/50',
-          'transition-all duration-700',
+          'transition-all duration-1000',
           hasEntered 
             ? 'opacity-100 translate-y-0' 
             : 'opacity-0 -translate-y-10'
@@ -138,16 +141,16 @@ const RoomWalkthrough = ({
       {/* Content with walking entrance effect */}
       <div
         className={cn(
-          'relative z-20 transition-all duration-1000 ease-out',
+          'relative z-20 transition-all duration-1200 ease-out',
           hasEntered 
-            ? 'opacity-100 translate-z-0 scale-100' 
-            : 'opacity-0 scale-90'
+            ? 'opacity-100' 
+            : 'opacity-0'
         )}
         style={{
           transform: hasEntered 
             ? 'translateZ(0) scale(1)' 
             : `translateZ(-200px) scale(0.9)`,
-          transitionDelay: '300ms',
+          transitionDelay: '400ms',
         }}
       >
         {children}
@@ -156,7 +159,7 @@ const RoomWalkthrough = ({
       {/* Light beam effect when entering */}
       <div
         className={cn(
-          'absolute inset-0 pointer-events-none transition-opacity duration-1000',
+          'absolute inset-0 pointer-events-none transition-opacity duration-1500',
           hasEntered ? 'opacity-0' : 'opacity-100'
         )}
         style={{
@@ -169,6 +172,31 @@ const RoomWalkthrough = ({
           `,
         }}
       />
+
+      {/* Footstep trail on entrance */}
+      <div
+        className={cn(
+          'absolute bottom-4 left-1/2 -translate-x-1/2 z-25',
+          'flex items-center gap-4 pointer-events-none',
+          'transition-all duration-1000',
+          hasEntered ? 'opacity-0 translate-y-4' : 'opacity-60'
+        )}
+      >
+        {[0, 1, 2, 3, 4].map((i) => (
+          <div
+            key={i}
+            className={cn(
+              'w-4 h-6 rounded-full',
+              'bg-primary/20',
+              !hasEntered && 'animate-pulse-soft'
+            )}
+            style={{
+              animationDelay: `${i * 0.15}s`,
+              transform: i % 2 === 0 ? 'rotate(-10deg)' : 'rotate(10deg)'
+            }}
+          />
+        ))}
+      </div>
     </div>
   );
 };
