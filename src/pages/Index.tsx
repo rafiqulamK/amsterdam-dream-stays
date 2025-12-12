@@ -8,7 +8,7 @@ import WelcomeDoor from "@/components/WelcomeDoor";
 import SectionReveal from "@/components/SectionReveal";
 import GreetingText from "@/components/GreetingText";
 import TourLauncher from "@/components/TourLauncher";
-import CorridorTransition from "@/components/CorridorTransition";
+import RoomWalkthrough from "@/components/RoomWalkthrough";
 import RoomSign from "@/components/RoomSign";
 import { useProperties } from "@/hooks/useProperties";
 import { useContactSettings } from "@/hooks/useContactSettings";
@@ -73,7 +73,11 @@ const Index = () => {
       </div>
 
       {/* Featured Properties Section - "Living Room" */}
-      <CorridorTransition>
+      <RoomWalkthrough
+        roomName="The Living Room"
+        roomNumber={1}
+        icon={<Home className="w-5 h-5" />}
+      >
         <section id="properties" data-tour-target="properties" className="py-20">
           <div className="container mx-auto px-4">
             <SectionReveal>
@@ -123,10 +127,14 @@ const Index = () => {
             )}
           </div>
         </section>
-      </CorridorTransition>
+      </RoomWalkthrough>
 
       {/* Features Section - "Amenities Room" */}
-      <CorridorTransition>
+      <RoomWalkthrough
+        roomName="The Amenities"
+        roomNumber={2}
+        icon={<Sparkles className="w-5 h-5" />}
+      >
         <section data-tour-target="features" className="py-20 bg-muted/30">
           <div className="container mx-auto px-4">
             <SectionReveal>
@@ -162,10 +170,14 @@ const Index = () => {
             </div>
           </div>
         </section>
-      </CorridorTransition>
+      </RoomWalkthrough>
 
       {/* Blog/News Section - "Reading Room" */}
-      <CorridorTransition>
+      <RoomWalkthrough
+        roomName="The Reading Room"
+        roomNumber={3}
+        icon={<BookOpen className="w-5 h-5" />}
+      >
         <section data-tour-target="blog" className="py-20">
           <div className="container mx-auto px-4">
             <SectionReveal>
@@ -188,10 +200,14 @@ const Index = () => {
           </div>
           <BlogSection />
         </section>
-      </CorridorTransition>
+      </RoomWalkthrough>
 
       {/* Contact Section - "Reception" */}
-      <CorridorTransition>
+      <RoomWalkthrough
+        roomName="The Reception"
+        roomNumber={4}
+        icon={<Headphones className="w-5 h-5" />}
+      >
         <section id="contact" data-tour-target="contact" className="py-20 bg-muted/30">
           <div className="container mx-auto px-4">
             <SectionReveal>
@@ -257,7 +273,7 @@ const Index = () => {
             </SectionReveal>
           </div>
         </section>
-      </CorridorTransition>
+      </RoomWalkthrough>
 
       <Footer />
       

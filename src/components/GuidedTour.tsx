@@ -19,10 +19,11 @@ import {
   Star,
   MapPin,
   Bed,
-  Bath
+  Bath,
+  Check,
+  Footprints
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import PropertySpotlight from '@/components/PropertySpotlight';
 
 interface TourStep {
   id: string;
@@ -100,12 +101,27 @@ const GuidedTour = ({ isOpen, onClose }: GuidedTourProps) => {
   const [showTooltip, setShowTooltip] = useState(false);
   const [isDoorTransitioning, setIsDoorTransitioning] = useState(false);
   const [highlightRect, setHighlightRect] = useState<DOMRect | null>(null);
+  const [visitedRooms, setVisitedRooms] = useState<Set<number>>(new Set([0]));
+  const [showWalkingPath, setShowWalkingPath] = useState(false);
+  
+  // Touch gesture state
+  const [touchStart, setTouchStart] = useState<{ x: number; y: number } | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  
   const { trigger } = useHaptics();
   const speechRef = useRef<SpeechSynthesisUtterance | null>(null);
   const autoPlayRef = useRef<NodeJS.Timeout | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const { data: properties } = useProperties('Amsterdam');
 
   const step = tourSteps[currentStep];
+
+  // Update visited rooms
+  useEffect(() => {
+    if (isOpen) {
+      setVisitedRooms(prev => new Set([...prev, currentStep]));
+    }
+  }, [currentStep, isOpen]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -121,8 +137,14 @@ const GuidedTour = ({ isOpen, onClose }: GuidedTourProps) => {
     
     setShowTooltip(false);
     setIsDoorTransitioning(true);
+    setShowWalkingPath(true);
     trigger('doorOpen');
     
+    // Walking path animation
+    const walkTimer = setTimeout(() => {
+      setShowWalkingPath(false);
+    }, 600);
+
     // Door transition duration
     const doorTimer = setTimeout(() => {
       setIsDoorTransitioning(false);
@@ -146,13 +168,16 @@ const GuidedTour = ({ isOpen, onClose }: GuidedTourProps) => {
       // Show tooltip after scroll
       const tooltipTimer = setTimeout(() => {
         setShowTooltip(true);
-        trigger('selection');
+        trigger('roomEnter');
       }, 800);
 
       return () => clearTimeout(tooltipTimer);
     }, 800);
 
-    return () => clearTimeout(doorTimer);
+    return () => {
+      clearTimeout(doorTimer);
+      clearTimeout(walkTimer);
+    };
   }, [currentStep, isOpen, step.targetSelector, trigger]);
 
   // Handle narration
@@ -192,11 +217,64 @@ const GuidedTour = ({ isOpen, onClose }: GuidedTourProps) => {
     };
   }, [showTooltip, step.narration, isMuted, isOpen, isPlaying, currentStep, trigger]);
 
+  // Touch gesture handlers
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    const touch = e.touches[0];
+    setTouchStart({ x: touch.clientX, y: touch.clientY });
+    setIsDragging(true);
+    trigger('tap');
+  }, [trigger]);
+
+  const handleTouchMove = useCallback((e: React.TouchEvent) => {
+    if (!touchStart || !isDragging) return;
+    
+    const touch = e.touches[0];
+    const deltaX = touch.clientX - touchStart.x;
+    const deltaY = touch.clientY - touchStart.y;
+    
+    // Detect swipe direction
+    if (Math.abs(deltaX) > 50 || Math.abs(deltaY) > 50) {
+      trigger('swipe');
+    }
+  }, [touchStart, isDragging, trigger]);
+
+  const handleTouchEnd = useCallback((e: React.TouchEvent) => {
+    if (!touchStart) return;
+    
+    const touch = e.changedTouches[0];
+    const deltaX = touch.clientX - touchStart.x;
+    const deltaY = touch.clientY - touchStart.y;
+    
+    // Horizontal swipe - navigate steps
+    if (Math.abs(deltaX) > 80 && Math.abs(deltaX) > Math.abs(deltaY)) {
+      if (deltaX > 0 && currentStep > 0) {
+        // Swipe right - previous
+        window.speechSynthesis?.cancel();
+        setCurrentStep(prev => prev - 1);
+        trigger('medium');
+      } else if (deltaX < 0 && currentStep < tourSteps.length - 1) {
+        // Swipe left - next
+        window.speechSynthesis?.cancel();
+        setCurrentStep(prev => prev + 1);
+        trigger('medium');
+      }
+    }
+    
+    // Vertical swipe down - exit tour
+    if (deltaY > 100 && Math.abs(deltaY) > Math.abs(deltaX)) {
+      trigger('light');
+      onClose();
+    }
+    
+    setTouchStart(null);
+    setIsDragging(false);
+  }, [touchStart, currentStep, onClose, trigger]);
+
   const handleNext = useCallback(() => {
     if (currentStep < tourSteps.length - 1) {
       window.speechSynthesis?.cancel();
       setCurrentStep(prev => prev + 1);
-      trigger('medium');
+      trigger('footstep');
     }
   }, [currentStep, trigger]);
 
@@ -204,7 +282,7 @@ const GuidedTour = ({ isOpen, onClose }: GuidedTourProps) => {
     if (currentStep > 0) {
       window.speechSynthesis?.cancel();
       setCurrentStep(prev => prev - 1);
-      trigger('medium');
+      trigger('footstep');
     }
   }, [currentStep, trigger]);
 
@@ -238,10 +316,16 @@ const GuidedTour = ({ isOpen, onClose }: GuidedTourProps) => {
   const featuredProperty = properties?.[0];
 
   return (
-    <>
+    <div
+      ref={containerRef}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+      className="fixed inset-0 z-[100]"
+    >
       {/* Door Transition Overlay */}
       {isDoorTransitioning && (
-        <div className="fixed inset-0 z-[60] pointer-events-none flex">
+        <div className="absolute inset-0 z-[60] pointer-events-none flex">
           <div 
             className="w-1/2 h-full bg-primary origin-left animate-tour-door-left"
             style={{
@@ -257,8 +341,26 @@ const GuidedTour = ({ isOpen, onClose }: GuidedTourProps) => {
         </div>
       )}
 
+      {/* Walking Path Animation */}
+      {showWalkingPath && (
+        <div className="absolute inset-0 z-[55] pointer-events-none flex items-center justify-center">
+          <div className="flex items-center gap-4">
+            {[0, 1, 2, 3].map((i) => (
+              <Footprints 
+                key={i}
+                className="w-8 h-8 text-primary-foreground animate-footstep"
+                style={{ 
+                  animationDelay: `${i * 0.15}s`,
+                  transform: i % 2 === 0 ? 'scaleX(-1)' : 'scaleX(1)'
+                }}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Spotlight overlay */}
-      <div className="fixed inset-0 z-40 pointer-events-none">
+      <div className="absolute inset-0 z-40 pointer-events-none">
         {/* Dark overlay with cutout */}
         <div 
           className="absolute inset-0 transition-all duration-500"
@@ -284,40 +386,112 @@ const GuidedTour = ({ isOpen, onClose }: GuidedTourProps) => {
         )}
       </div>
 
-      {/* Walking Path Indicator */}
-      <div className="fixed left-8 top-1/2 -translate-y-1/2 z-50 hidden md:flex flex-col items-center gap-2">
+      {/* Breadcrumb Trail - Top */}
+      <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50">
+        <div className="flex items-center gap-2 px-4 py-2 rounded-full glass border border-primary/20">
+          {tourSteps.map((s, idx) => {
+            const StepIcon = s.icon;
+            const isActive = idx === currentStep;
+            const isVisited = visitedRooms.has(idx);
+            
+            return (
+              <div key={s.id} className="flex items-center gap-2">
+                <button
+                  onClick={() => {
+                    setCurrentStep(idx);
+                    trigger('light');
+                  }}
+                  className={cn(
+                    'relative flex items-center gap-1 px-2 py-1 rounded-full transition-all duration-300',
+                    isActive && 'bg-primary text-primary-foreground',
+                    isVisited && !isActive && 'bg-primary/20 text-primary',
+                    !isVisited && !isActive && 'text-muted-foreground hover:text-foreground'
+                  )}
+                  aria-label={`${s.title}${isVisited ? ' (visited)' : ''}`}
+                >
+                  <StepIcon className="w-3 h-3" aria-hidden="true" />
+                  {isActive && (
+                    <span className="text-xs font-medium hidden sm:inline">{s.title}</span>
+                  )}
+                  {isVisited && !isActive && (
+                    <Check className="w-2 h-2 absolute -top-1 -right-1 text-primary" aria-hidden="true" />
+                  )}
+                </button>
+                
+                {/* Connector */}
+                {idx < tourSteps.length - 1 && (
+                  <div 
+                    className={cn(
+                      'w-4 h-0.5 transition-colors duration-300',
+                      isVisited ? 'bg-primary/50' : 'bg-muted'
+                    )}
+                  />
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Walking Path Indicator - Left Side */}
+      <div className="fixed left-4 top-1/2 -translate-y-1/2 z-50 hidden lg:flex flex-col items-center gap-3">
         {tourSteps.map((s, idx) => {
           const StepIcon = s.icon;
           const isActive = idx === currentStep;
           const isPast = idx < currentStep;
+          const isVisited = visitedRooms.has(idx);
           
           return (
-            <button
-              key={s.id}
-              onClick={() => {
-                setCurrentStep(idx);
-                trigger('light');
-              }}
-              className={cn(
-                'relative p-2 rounded-xl transition-all duration-300',
-                isActive && 'bg-primary text-primary-foreground scale-125',
-                isPast && 'bg-primary/20 text-primary',
-                !isActive && !isPast && 'bg-muted text-muted-foreground hover:bg-muted/80'
-              )}
-              aria-label={`Go to ${s.title}`}
-            >
-              <StepIcon className="w-4 h-4" aria-hidden="true" />
+            <div key={s.id} className="relative">
+              <button
+                onClick={() => {
+                  setCurrentStep(idx);
+                  trigger('footstep');
+                }}
+                className={cn(
+                  'relative p-3 rounded-xl transition-all duration-300',
+                  'hover:scale-110',
+                  isActive && 'bg-primary text-primary-foreground scale-110 shadow-lg',
+                  isPast && 'bg-primary/30 text-primary',
+                  !isActive && !isPast && 'bg-muted text-muted-foreground hover:bg-muted/80'
+                )}
+                aria-label={`Go to ${s.title}`}
+              >
+                <StepIcon className="w-5 h-5" aria-hidden="true" />
+                
+                {/* Visited checkmark */}
+                {isVisited && !isActive && (
+                  <div className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-primary flex items-center justify-center">
+                    <Check className="w-2.5 h-2.5 text-primary-foreground" aria-hidden="true" />
+                  </div>
+                )}
+              </button>
               
-              {/* Connector line */}
+              {/* Connector line with footsteps */}
               {idx < tourSteps.length - 1 && (
-                <div 
-                  className={cn(
-                    'absolute left-1/2 -translate-x-1/2 top-full w-0.5 h-2',
-                    isPast ? 'bg-primary' : 'bg-muted'
+                <div className="absolute left-1/2 -translate-x-1/2 top-full flex flex-col items-center">
+                  <div 
+                    className={cn(
+                      'w-0.5 h-3',
+                      isPast ? 'bg-primary' : 'bg-muted'
+                    )}
+                  />
+                  {isPast && (
+                    <Footprints className="w-3 h-3 text-primary/50 rotate-180" aria-hidden="true" />
                   )}
-                />
+                </div>
               )}
-            </button>
+              
+              {/* Room name tooltip on hover */}
+              <div className={cn(
+                'absolute left-full ml-3 px-3 py-1.5 rounded-lg bg-popover border border-border',
+                'text-sm font-medium whitespace-nowrap',
+                'opacity-0 pointer-events-none transition-opacity',
+                'group-hover:opacity-100'
+              )}>
+                {s.title}
+              </div>
+            </div>
           );
         })}
       </div>
@@ -326,7 +500,7 @@ const GuidedTour = ({ isOpen, onClose }: GuidedTourProps) => {
       <div
         className={cn(
           'fixed z-50 max-w-md transition-all duration-700',
-          'right-8 top-1/4',
+          'right-4 md:right-8 top-24 md:top-1/4',
           showTooltip && !isDoorTransitioning ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-8'
         )}
       >
@@ -341,7 +515,7 @@ const GuidedTour = ({ isOpen, onClose }: GuidedTourProps) => {
           {/* Room sign header */}
           <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 bg-primary rounded-full">
             <p className="text-xs font-bold text-primary-foreground uppercase tracking-wider">
-              Room {currentStep + 1}
+              Room {currentStep + 1} of {tourSteps.length}
             </p>
           </div>
 
@@ -413,8 +587,18 @@ const GuidedTour = ({ isOpen, onClose }: GuidedTourProps) => {
             </div>
           )}
 
-          {/* Scroll indicator */}
-          <div className="flex items-center justify-center text-muted-foreground animate-bounce-subtle">
+          {/* Swipe hint for mobile */}
+          <div className="flex flex-col items-center gap-1 text-muted-foreground md:hidden">
+            <div className="flex items-center gap-2 text-xs">
+              <ChevronDown className="w-4 h-4 rotate-90" aria-hidden="true" />
+              <span>Swipe to navigate</span>
+              <ChevronDown className="w-4 h-4 -rotate-90" aria-hidden="true" />
+            </div>
+            <span className="text-xs opacity-60">Pull down to exit</span>
+          </div>
+
+          {/* Scroll indicator for desktop */}
+          <div className="hidden md:flex items-center justify-center text-muted-foreground animate-bounce-subtle">
             <ChevronDown className="w-5 h-5" aria-hidden="true" />
             <span className="text-xs ml-1">Scroll to explore</span>
           </div>
@@ -431,7 +615,7 @@ const GuidedTour = ({ isOpen, onClose }: GuidedTourProps) => {
                 key={s.id}
                 onClick={() => {
                   setCurrentStep(idx);
-                  trigger('light');
+                  trigger('footstep');
                 }}
                 className={cn(
                   'w-2 h-2 rounded-full transition-all duration-300',
@@ -506,7 +690,17 @@ const GuidedTour = ({ isOpen, onClose }: GuidedTourProps) => {
           </Button>
         </div>
       </div>
-    </>
+
+      {/* Tour completion celebration */}
+      {currentStep === tourSteps.length - 1 && showTooltip && (
+        <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 animate-fade-in">
+          <div className="px-4 py-2 rounded-full bg-primary text-primary-foreground font-medium text-sm flex items-center gap-2">
+            <Check className="w-4 h-4" aria-hidden="true" />
+            <span>Tour Complete! {visitedRooms.size}/{tourSteps.length} rooms visited</span>
+          </div>
+        </div>
+      )}
+    </div>
   );
 };
 
