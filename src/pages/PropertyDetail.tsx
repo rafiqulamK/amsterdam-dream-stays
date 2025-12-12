@@ -7,6 +7,11 @@ import Footer from "@/components/Footer";
 import ImmersiveLeadForm from "@/components/ImmersiveLeadForm";
 import VideoPlayer from "@/components/VideoPlayer";
 import SectionReveal from "@/components/SectionReveal";
+import PropertyDoorEntrance from "@/components/PropertyDoorEntrance";
+import PropertyTour from "@/components/PropertyTour";
+import PropertyTourLauncher from "@/components/PropertyTourLauncher";
+import PropertyGalleryDoor from "@/components/PropertyGalleryDoor";
+import PropertySection from "@/components/PropertySection";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -20,14 +25,17 @@ import {
   Heart,
   Share2,
   Loader2,
-  ChevronLeft,
-  ChevronRight,
   Clock,
   Shield,
   Zap,
   Play,
+  Info,
+  FileText,
+  Sparkles,
+  MessageSquare,
 } from "lucide-react";
 import { useFacebookPixel } from "@/hooks/useFacebookPixel";
+import { useHaptics } from "@/hooks/useHaptics";
 import { Property } from "@/types/property";
 
 interface PropertyWithVideos extends Property {
@@ -42,7 +50,21 @@ const PropertyDetail = () => {
   const [isFavorited, setIsFavorited] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [showVideos, setShowVideos] = useState(false);
+  const [showWelcome, setShowWelcome] = useState(true);
+  const [isTourOpen, setIsTourOpen] = useState(false);
   const { trackEvent } = useFacebookPixel();
+  const { trigger } = useHaptics();
+
+  // Check if entrance animation should play (once per property session)
+  useEffect(() => {
+    if (id) {
+      const sessionKey = `property_visited_${id}`;
+      const hasVisited = sessionStorage.getItem(sessionKey);
+      if (hasVisited) {
+        setShowWelcome(false);
+      }
+    }
+  }, [id]);
 
   useEffect(() => {
     const fetchProperty = async () => {
@@ -97,19 +119,19 @@ const PropertyDetail = () => {
     }
   }, [property, trackEvent]);
 
+  const handleEntranceComplete = () => {
+    setShowWelcome(false);
+    if (id) {
+      sessionStorage.setItem(`property_visited_${id}`, 'true');
+    }
+    trigger('propertyEnter');
+  };
+
   const images = property?.images && property.images.length > 0 
     ? property.images 
     : property ? [property.image] : [];
 
   const videos = property?.videos || [];
-
-  const nextImage = () => {
-    setCurrentImageIndex((prev) => (prev + 1) % images.length);
-  };
-
-  const prevImage = () => {
-    setCurrentImageIndex((prev) => (prev - 1 + images.length) % images.length);
-  };
 
   // Calculate days ago
   const getDaysAgo = () => {
@@ -124,7 +146,7 @@ const PropertyDetail = () => {
       <div className="min-h-screen bg-background">
         <Header />
         <div className="container mx-auto px-4 pt-24 pb-20 flex items-center justify-center">
-          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+          <Loader2 className="w-8 h-8 animate-spin text-primary" aria-label="Loading" />
         </div>
       </div>
     );
@@ -139,7 +161,7 @@ const PropertyDetail = () => {
             <h1 className="text-4xl font-bold mb-4 text-foreground">Property not found</h1>
             <Link to="/">
               <Button>
-                <ArrowLeft className="w-4 h-4 mr-2" />
+                <ArrowLeft className="w-4 h-4 mr-2" aria-label="Back" />
                 Back to Home
               </Button>
             </Link>
@@ -152,55 +174,45 @@ const PropertyDetail = () => {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
+      {/* Property entrance animation */}
+      {showWelcome && (
+        <PropertyDoorEntrance
+          propertyTitle={property.title}
+          propertyImage={images[0]}
+          propertyLocation={`${property.location}, ${property.city}`}
+          propertyPrice={property.price}
+          onComplete={handleEntranceComplete}
+        />
+      )}
+
       <Header />
       
       <main className="flex-1">
-        {/* Image Carousel */}
-        <div className="relative w-full aspect-[21/9] max-h-[500px] bg-muted">
-          <img
-            src={images[currentImageIndex]}
-            alt={property.title}
-            className="w-full h-full object-cover"
-          />
-          
-          {/* Navigation Arrows */}
-          {images.length > 1 && (
-            <>
-              <button
-                onClick={prevImage}
-                className="absolute left-4 top-1/2 -translate-y-1/2 p-3 rounded-full bg-background/80 hover:bg-background transition-colors"
-              >
-                <ChevronLeft className="w-6 h-6 text-foreground" />
-              </button>
-              <button
-                onClick={nextImage}
-                className="absolute right-4 top-1/2 -translate-y-1/2 p-3 rounded-full bg-background/80 hover:bg-background transition-colors"
-              >
-                <ChevronRight className="w-6 h-6 text-foreground" />
-              </button>
-              
-              {/* Image Counter */}
-              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 px-4 py-2 rounded-full bg-background/80 text-sm text-foreground">
-                {currentImageIndex + 1} / {images.length}
-              </div>
-            </>
-          )}
+        {/* Image Gallery with Door Transitions */}
+        <PropertyGalleryDoor
+          images={images}
+          currentIndex={currentImageIndex}
+          onIndexChange={setCurrentImageIndex}
+          propertyTitle={property.title}
+        />
 
-          {/* Action Buttons */}
-          <div className="absolute top-4 right-4 flex gap-2">
+        {/* Action Buttons Overlay */}
+        <div className="container mx-auto px-4 -mt-16 relative z-10">
+          <div className="flex justify-end gap-2">
             {videos.length > 0 && (
               <button 
                 onClick={() => setShowVideos(!showVideos)}
-                className="p-2 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 transition-colors flex items-center gap-2 px-4"
+                className="p-2 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 transition-colors flex items-center gap-2 px-4 shadow-lg"
               >
-                <Play className="w-4 h-4" />
-                <span className="text-sm font-medium">Tour</span>
+                <Play className="w-4 h-4" aria-label="Play tour" />
+                <span className="text-sm font-medium">Video Tour</span>
               </button>
             )}
             <button 
               onClick={() => {
                 const newState = !isFavorited;
                 setIsFavorited(newState);
+                trigger('tap');
                 if (newState) {
                   trackEvent('AddToWishlist', {
                     content_name: property.title,
@@ -211,11 +223,15 @@ const PropertyDetail = () => {
                   });
                 }
               }}
-              className="p-2 rounded-full bg-background/90 hover:bg-background transition-colors"
+              className="p-3 rounded-full bg-card shadow-lg hover:bg-accent transition-colors"
+              aria-label={isFavorited ? "Remove from favorites" : "Add to favorites"}
             >
               <Heart className={`w-5 h-5 ${isFavorited ? 'fill-destructive text-destructive' : 'text-foreground'}`} />
             </button>
-            <button className="p-2 rounded-full bg-background/90 hover:bg-background transition-colors">
+            <button 
+              className="p-3 rounded-full bg-card shadow-lg hover:bg-accent transition-colors"
+              aria-label="Share property"
+            >
               <Share2 className="w-5 h-5 text-foreground" />
             </button>
           </div>
@@ -243,167 +259,222 @@ const PropertyDetail = () => {
 
         <div className="container mx-auto px-4 py-8">
           <Link to="/" className="inline-flex items-center text-primary hover:underline mb-6 text-sm">
-            <ArrowLeft className="w-4 h-4 mr-1" />
+            <ArrowLeft className="w-4 h-4 mr-1" aria-label="Back" />
             Back to overview
           </Link>
 
           <div className="grid lg:grid-cols-3 gap-8">
             {/* Main Content */}
-            <div className="lg:col-span-2 space-y-6">
+            <div className="lg:col-span-2 space-y-8">
               {/* Title & Location */}
-              <div>
-                <h1 className="text-3xl font-bold mb-2 text-foreground">{property.title}</h1>
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <MapPin className="w-4 h-4" />
-                  <span>{property.location}, {property.city}</span>
+              <PropertySection
+                id="property-details"
+                title="Details"
+                roomNumber={1}
+                icon={Info}
+                showSign={false}
+              >
+                <div className="mb-6">
+                  <h1 className="text-3xl font-bold mb-2 text-foreground">{property.title}</h1>
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <MapPin className="w-4 h-4" aria-label="Location" />
+                    <span>{property.location}, {property.city}</span>
+                  </div>
                 </div>
-              </div>
 
-              {/* Quick Stats */}
-              <div className="flex items-center gap-6 py-4 border-y border-border">
-                <div className="flex items-center gap-2 text-foreground">
-                  <Bed className="w-5 h-5 text-muted-foreground" />
-                  <span>{property.bedrooms} bedrooms</span>
+                {/* Quick Stats */}
+                <div className="flex items-center gap-6 py-4 border-y border-border">
+                  <div className="flex items-center gap-2 text-foreground">
+                    <Bed className="w-5 h-5 text-muted-foreground" aria-label="Bedrooms" />
+                    <span>{property.bedrooms} bedrooms</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-foreground">
+                    <Bath className="w-5 h-5 text-muted-foreground" aria-label="Bathrooms" />
+                    <span>{property.bathrooms} bathrooms</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-foreground">
+                    <Maximize className="w-5 h-5 text-muted-foreground" aria-label="Area" />
+                    <span>{property.area} m²</span>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2 text-foreground">
-                  <Bath className="w-5 h-5 text-muted-foreground" />
-                  <span>{property.bathrooms} bathrooms</span>
-                </div>
-                <div className="flex items-center gap-2 text-foreground">
-                  <Maximize className="w-5 h-5 text-muted-foreground" />
-                  <span>{property.area} m²</span>
-                </div>
-              </div>
+              </PropertySection>
 
               {/* Description */}
-              <Card className="border-border">
-                <CardContent className="p-6">
-                  <h2 className="text-xl font-semibold mb-4 text-foreground">Description</h2>
-                  <p className="text-muted-foreground leading-relaxed whitespace-pre-line">
-                    {property.description}
-                  </p>
-                </CardContent>
-              </Card>
+              <PropertySection
+                id="property-description"
+                title="Description"
+                roomNumber={2}
+                icon={FileText}
+              >
+                <Card className="border-border">
+                  <CardContent className="p-6">
+                    <h2 className="text-xl font-semibold mb-4 text-foreground">About This Property</h2>
+                    <p className="text-muted-foreground leading-relaxed whitespace-pre-line">
+                      {property.description}
+                    </p>
+                  </CardContent>
+                </Card>
+              </PropertySection>
 
               {/* Amenities */}
-              <Card className="border-border">
-                <CardContent className="p-6">
-                  <h2 className="text-xl font-semibold mb-4 text-foreground">Amenities</h2>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                    {property.amenities.map((amenity, idx) => (
-                      <div key={idx} className="flex items-center gap-2 text-foreground">
-                        <Check className="w-4 h-4 text-primary shrink-0" />
-                        <span className="text-sm">{amenity}</span>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
+              <PropertySection
+                id="property-amenities"
+                title="Amenities"
+                roomNumber={3}
+                icon={Sparkles}
+              >
+                <Card className="border-border">
+                  <CardContent className="p-6">
+                    <h2 className="text-xl font-semibold mb-4 text-foreground">Features & Amenities</h2>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                      {property.amenities.map((amenity, idx) => (
+                        <div key={idx} className="flex items-center gap-2 text-foreground">
+                          <Check className="w-4 h-4 text-primary shrink-0" aria-label="Included" />
+                          <span className="text-sm">{amenity}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              </PropertySection>
 
               {/* Energy Efficiency */}
-              <Card className="border-border">
-                <CardContent className="p-6">
-                  <h2 className="text-xl font-semibold mb-4 text-foreground">Energy Efficiency</h2>
-                  <div className="grid grid-cols-3 gap-4">
-                    <div className="text-center p-4 bg-muted rounded-lg">
-                      <CalendarIcon className="w-6 h-6 mx-auto mb-2 text-muted-foreground" />
-                      <div className="text-sm text-muted-foreground">Year of construction</div>
-                      <div className="font-semibold text-foreground">2020</div>
+              <PropertySection
+                id="property-energy"
+                title="Energy"
+                roomNumber={4}
+                icon={Zap}
+              >
+                <Card className="border-border">
+                  <CardContent className="p-6">
+                    <h2 className="text-xl font-semibold mb-4 text-foreground">Energy Efficiency</h2>
+                    <div className="grid grid-cols-3 gap-4">
+                      <div className="text-center p-4 bg-muted rounded-lg">
+                        <CalendarIcon className="w-6 h-6 mx-auto mb-2 text-muted-foreground" aria-label="Year built" />
+                        <div className="text-sm text-muted-foreground">Year of construction</div>
+                        <div className="font-semibold text-foreground">2020</div>
+                      </div>
+                      <div className="text-center p-4 bg-muted rounded-lg">
+                        <Zap className="w-6 h-6 mx-auto mb-2 text-primary" aria-label="Energy class" />
+                        <div className="text-sm text-muted-foreground">Energy Class</div>
+                        <div className="font-semibold text-primary">A</div>
+                      </div>
+                      <div className="text-center p-4 bg-muted rounded-lg">
+                        <Zap className="w-6 h-6 mx-auto mb-2 text-muted-foreground" aria-label="Consumption" />
+                        <div className="text-sm text-muted-foreground">Consumption</div>
+                        <div className="font-semibold text-foreground">≤50 kWh/m²a</div>
+                      </div>
                     </div>
-                    <div className="text-center p-4 bg-muted rounded-lg">
-                      <Zap className="w-6 h-6 mx-auto mb-2 text-primary" />
-                      <div className="text-sm text-muted-foreground">Energy Class</div>
-                      <div className="font-semibold text-primary">A</div>
-                    </div>
-                    <div className="text-center p-4 bg-muted rounded-lg">
-                      <Zap className="w-6 h-6 mx-auto mb-2 text-muted-foreground" />
-                      <div className="text-sm text-muted-foreground">Consumption</div>
-                      <div className="font-semibold text-foreground">≤50 kWh/m²a</div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
+              </PropertySection>
             </div>
 
-            {/* Sidebar - Pricing Card (huure.nl style) */}
+            {/* Sidebar - Pricing Card */}
             <div className="lg:col-span-1">
-              <Card className="border-border sticky top-24 overflow-hidden">
-                {/* Price Header */}
-                <div className="bg-primary p-6 text-center">
-                  <div className="text-3xl font-bold text-primary-foreground">
-                    €{property.price.toLocaleString()}
-                  </div>
-                  <div className="text-primary-foreground/80 text-sm">per month</div>
-                </div>
-
-                {/* Info Table */}
-                <CardContent className="p-0">
-                  <div className="divide-y divide-border">
-                    <div className="flex justify-between px-6 py-3">
-                      <span className="text-muted-foreground">Location</span>
-                      <span className="text-foreground font-medium">{property.location}</span>
+              <PropertySection
+                id="property-contact"
+                title="Contact"
+                roomNumber={5}
+                icon={MessageSquare}
+                showSign={false}
+              >
+                <Card className="border-border sticky top-24 overflow-hidden">
+                  {/* Price Header */}
+                  <div className="bg-primary p-6 text-center">
+                    <div className="text-3xl font-bold text-primary-foreground">
+                      €{property.price.toLocaleString()}
                     </div>
-                    <div className="flex justify-between px-6 py-3">
-                      <span className="text-muted-foreground">Rental period</span>
-                      <span className="text-foreground font-medium">Indefinite</span>
-                    </div>
-                    <div className="flex justify-between px-6 py-3">
-                      <span className="text-muted-foreground flex items-center gap-1">
-                        <Shield className="w-4 h-4" />
-                        Verified landlord
-                      </span>
-                      <span className="text-primary font-medium">Yes</span>
-                    </div>
-                    <div className="flex justify-between px-6 py-3">
-                      <span className="text-muted-foreground flex items-center gap-1">
-                        <Clock className="w-4 h-4" />
-                        Posted
-                      </span>
-                      <span className="text-foreground font-medium">{getDaysAgo()} days ago</span>
-                    </div>
-                    <div className="flex justify-between px-6 py-3">
-                      <span className="text-muted-foreground flex items-center gap-1">
-                        <CalendarIcon className="w-4 h-4" />
-                        Available from
-                      </span>
-                      <span className="text-foreground font-medium">
-                        {new Date(property.availableFrom).toLocaleDateString("en-GB", {
-                          day: "numeric",
-                          month: "short",
-                          year: "numeric",
-                        })}
-                      </span>
-                    </div>
-                    <div className="flex justify-between px-6 py-3">
-                      <span className="text-muted-foreground">Utilities</span>
-                      <span className="text-foreground font-medium">Contact landlord</span>
-                    </div>
-                    <div className="flex justify-between px-6 py-3">
-                      <span className="text-muted-foreground">Deposit</span>
-                      <span className="text-foreground font-medium">Contact landlord</span>
-                    </div>
+                    <div className="text-primary-foreground/80 text-sm">per month</div>
                   </div>
 
-                  {/* CTA Button */}
-                  <div className="p-6">
-                    <Button
-                      onClick={() => setIsQuestionnaireOpen(true)}
-                      className="w-full h-12 text-base font-semibold"
-                    >
-                      CONTACT LANDLORD
-                    </Button>
-                    <p className="text-center text-xs text-muted-foreground mt-3">
-                      Fill out our form and we'll connect you with the landlord.
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
+                  {/* Info Table */}
+                  <CardContent className="p-0">
+                    <div className="divide-y divide-border">
+                      <div className="flex justify-between px-6 py-3">
+                        <span className="text-muted-foreground">Location</span>
+                        <span className="text-foreground font-medium">{property.location}</span>
+                      </div>
+                      <div className="flex justify-between px-6 py-3">
+                        <span className="text-muted-foreground">Rental period</span>
+                        <span className="text-foreground font-medium">Indefinite</span>
+                      </div>
+                      <div className="flex justify-between px-6 py-3">
+                        <span className="text-muted-foreground flex items-center gap-1">
+                          <Shield className="w-4 h-4" aria-label="Verified" />
+                          Verified landlord
+                        </span>
+                        <span className="text-primary font-medium">Yes</span>
+                      </div>
+                      <div className="flex justify-between px-6 py-3">
+                        <span className="text-muted-foreground flex items-center gap-1">
+                          <Clock className="w-4 h-4" aria-label="Posted date" />
+                          Posted
+                        </span>
+                        <span className="text-foreground font-medium">{getDaysAgo()} days ago</span>
+                      </div>
+                      <div className="flex justify-between px-6 py-3">
+                        <span className="text-muted-foreground flex items-center gap-1">
+                          <CalendarIcon className="w-4 h-4" aria-label="Available from" />
+                          Available from
+                        </span>
+                        <span className="text-foreground font-medium">
+                          {new Date(property.availableFrom).toLocaleDateString("en-GB", {
+                            day: "numeric",
+                            month: "short",
+                            year: "numeric",
+                          })}
+                        </span>
+                      </div>
+                      <div className="flex justify-between px-6 py-3">
+                        <span className="text-muted-foreground">Utilities</span>
+                        <span className="text-foreground font-medium">Contact landlord</span>
+                      </div>
+                      <div className="flex justify-between px-6 py-3">
+                        <span className="text-muted-foreground">Deposit</span>
+                        <span className="text-foreground font-medium">Contact landlord</span>
+                      </div>
+                    </div>
+
+                    {/* CTA Button */}
+                    <div className="p-6">
+                      <Button
+                        onClick={() => {
+                          setIsQuestionnaireOpen(true);
+                          trigger('tap');
+                        }}
+                        className="w-full h-12 text-base font-semibold"
+                      >
+                        CONTACT LANDLORD
+                      </Button>
+                      <p className="text-center text-xs text-muted-foreground mt-3">
+                        Fill out our form and we'll connect you with the landlord.
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+              </PropertySection>
             </div>
           </div>
         </div>
       </main>
 
       <Footer />
+
+      {/* Property Tour Launcher */}
+      <PropertyTourLauncher onStartTour={() => {
+        setIsTourOpen(true);
+        trigger('tourStart');
+      }} />
+
+      {/* Property Tour */}
+      <PropertyTour 
+        isOpen={isTourOpen} 
+        onClose={() => {
+          setIsTourOpen(false);
+          trigger('tourComplete');
+        }} 
+      />
 
       <ImmersiveLeadForm
         open={isQuestionnaireOpen}

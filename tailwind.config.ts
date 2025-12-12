@@ -179,6 +179,25 @@ export default {
           "0%": { opacity: "0", transform: "scale(0.8)" },
           "100%": { opacity: "1", transform: "scale(1)" },
         },
+        // Property-specific animations
+        "property-door-left": {
+          "0%": { transform: "rotateY(0deg)" },
+          "100%": { transform: "rotateY(-105deg)" },
+        },
+        "property-door-right": {
+          "0%": { transform: "rotateY(0deg)" },
+          "100%": { transform: "rotateY(105deg)" },
+        },
+        "gallery-slide": {
+          "0%": { transform: "translateX(0)", opacity: "1" },
+          "50%": { transform: "translateX(-10%)", opacity: "0" },
+          "51%": { transform: "translateX(10%)", opacity: "0" },
+          "100%": { transform: "translateX(0)", opacity: "1" },
+        },
+        "section-enter": {
+          "0%": { opacity: "0", transform: "translateY(30px) scale(0.98)" },
+          "100%": { opacity: "1", transform: "translateY(0) scale(1)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -209,6 +228,11 @@ export default {
         "sound-wave": "sound-wave 0.6s ease-in-out infinite",
         "swing": "swing 3s ease-in-out infinite",
         "spotlight": "spotlight 0.5s ease-out forwards",
+        // Property-specific animations
+        "property-door-left": "property-door-left 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards",
+        "property-door-right": "property-door-right 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards",
+        "gallery-slide": "gallery-slide 0.8s ease-out forwards",
+        "section-enter": "section-enter 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards",
       },
       backgroundImage: {
         'gradient-hero': 'var(--gradient-hero)',
