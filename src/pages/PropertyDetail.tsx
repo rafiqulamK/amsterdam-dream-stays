@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { properties as staticProperties } from "@/data/properties";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import LeadQuestionnaireDialog from "@/components/LeadQuestionnaireDialog";
+import ImmersiveLeadForm from "@/components/ImmersiveLeadForm";
 import VideoPlayer from "@/components/VideoPlayer";
 import SectionReveal from "@/components/SectionReveal";
 import { Button } from "@/components/ui/button";
@@ -405,7 +405,7 @@ const PropertyDetail = () => {
 
       <Footer />
 
-      <LeadQuestionnaireDialog
+      <ImmersiveLeadForm
         open={isQuestionnaireOpen}
         onOpenChange={setIsQuestionnaireOpen}
         property={property}
