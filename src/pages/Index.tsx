@@ -1,12 +1,16 @@
+import { useState, useEffect } from "react";
 import Header from "@/components/Header";
 import Hero from "@/components/Hero";
 import Footer from "@/components/Footer";
 import PropertyCard from "@/components/PropertyCard";
 import BlogSection from "@/components/BlogSection";
+import WelcomeDoor from "@/components/WelcomeDoor";
+import SectionReveal from "@/components/SectionReveal";
+import GreetingText from "@/components/GreetingText";
 import { useProperties } from "@/hooks/useProperties";
 import { useContactSettings } from "@/hooks/useContactSettings";
 import { useFacebookPixel } from "@/hooks/useFacebookPixel";
-import { Search, Shield, Zap, MapPin, Phone, Mail } from "lucide-react";
+import { Search, Shield, Zap, MapPin, Phone, Mail, Home, BookOpen, Headphones } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const features = [
@@ -28,10 +32,23 @@ const features = [
 ];
 
 const Index = () => {
-  // Fetch Amsterdam-only approved properties
+  const [showWelcome, setShowWelcome] = useState(true);
   const { data: properties, isLoading } = useProperties("Amsterdam");
   const { settings: contact } = useContactSettings();
   const { trackEvent } = useFacebookPixel();
+
+  // Check if user has seen the welcome animation in this session
+  useEffect(() => {
+    const hasSeenWelcome = sessionStorage.getItem('hasSeenWelcome');
+    if (hasSeenWelcome) {
+      setShowWelcome(false);
+    }
+  }, []);
+
+  const handleWelcomeComplete = () => {
+    sessionStorage.setItem('hasSeenWelcome', 'true');
+    setShowWelcome(false);
+  };
 
   const handleContactClick = (type: string) => {
     trackEvent('Contact', {
@@ -42,24 +59,40 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      {/* Welcome Door Animation */}
+      {showWelcome && <WelcomeDoor onComplete={handleWelcomeComplete} />}
+
       <Header />
       <Hero />
 
-      {/* Featured Properties Section - Amsterdam Only */}
-      <section id="properties" className="py-16">
+      {/* Featured Properties Section - "Living Room" */}
+      <section id="properties" className="py-20">
         <div className="container mx-auto px-4">
-          <div className="flex items-center justify-between mb-8">
-            <div>
-              <h2 className="text-3xl font-bold text-foreground">Featured properties in Amsterdam</h2>
-              <p className="text-muted-foreground mt-2">Verified rentals available now</p>
+          <SectionReveal>
+            <div className="flex items-center gap-3 mb-2">
+              <div className="p-2 rounded-lg bg-primary/10">
+                <Home className="w-5 h-5 text-primary" />
+              </div>
+              <span className="text-sm font-medium text-primary uppercase tracking-wider">
+                The Living Room
+              </span>
             </div>
-          </div>
+          </SectionReveal>
+
+          <SectionReveal delay={100}>
+            <GreetingText
+              title="Step into your new home"
+              subtitle="Verified rentals available now in Amsterdam"
+              align="left"
+              className="mb-10"
+            />
+          </SectionReveal>
           
           {isLoading ? (
             <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
               {[1, 2, 3, 4].map((i) => (
                 <div key={i} className="space-y-4">
-                  <Skeleton className="h-48 w-full rounded-xl" />
+                  <Skeleton className="h-48 w-full rounded-xl shimmer" />
                   <Skeleton className="h-4 w-3/4" />
                   <Skeleton className="h-4 w-1/2" />
                 </div>
@@ -67,78 +100,152 @@ const Index = () => {
             </div>
           ) : (
             <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {properties?.map((property) => (
-                <PropertyCard key={property.id} property={property} />
+              {properties?.map((property, idx) => (
+                <SectionReveal key={property.id} delay={idx * 100} direction="up">
+                  <PropertyCard property={property} />
+                </SectionReveal>
               ))}
             </div>
           )}
 
           {!isLoading && (!properties || properties.length === 0) && (
-            <div className="text-center py-12">
-              <p className="text-muted-foreground">No properties available at the moment. Check back soon!</p>
-            </div>
+            <SectionReveal>
+              <div className="text-center py-12 glass rounded-2xl">
+                <p className="text-muted-foreground">No properties available at the moment. Check back soon!</p>
+              </div>
+            </SectionReveal>
           )}
         </div>
       </section>
 
-      {/* Features Section */}
-      <section className="py-16 bg-muted/30">
+      {/* Features Section - "Amenities Room" */}
+      <section className="py-20 bg-muted/30">
         <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-bold mb-8 text-foreground text-center">
-            What makes {contact.company_name} special?
-          </h2>
+          <SectionReveal>
+            <div className="flex items-center justify-center gap-3 mb-2">
+              <div className="p-2 rounded-lg bg-primary/10">
+                <Zap className="w-5 h-5 text-primary" />
+              </div>
+              <span className="text-sm font-medium text-primary uppercase tracking-wider">
+                The Amenities
+              </span>
+            </div>
+          </SectionReveal>
+
+          <SectionReveal delay={100}>
+            <GreetingText
+              title={`What makes ${contact.company_name} special?`}
+              subtitle="Discover the features that set us apart"
+              className="mb-12"
+            />
+          </SectionReveal>
+
           <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
             {features.map((feature, idx) => (
-              <div key={idx} className="text-center">
-                <div className="w-14 h-14 mx-auto mb-4 rounded-full bg-primary/10 flex items-center justify-center">
-                  <feature.icon className="w-7 h-7 text-primary" />
+              <SectionReveal key={idx} delay={200 + idx * 150}>
+                <div className="text-center p-8 rounded-2xl glass hover-lift">
+                  <div className="w-16 h-16 mx-auto mb-6 rounded-2xl bg-primary/10 flex items-center justify-center">
+                    <feature.icon className="w-8 h-8 text-primary" />
+                  </div>
+                  <h3 className="text-xl font-semibold mb-3 text-foreground">{feature.title}</h3>
+                  <p className="text-muted-foreground">{feature.description}</p>
                 </div>
-                <h3 className="text-lg font-semibold mb-2 text-foreground">{feature.title}</h3>
-                <p className="text-muted-foreground text-sm">{feature.description}</p>
-              </div>
+              </SectionReveal>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Blog/News Section */}
-      <BlogSection />
-
-      {/* Contact Section */}
-      <section id="contact" className="py-16">
+      {/* Blog/News Section - "Reading Room" */}
+      <section className="py-20">
         <div className="container mx-auto px-4">
-          <div className="max-w-2xl mx-auto text-center">
-            <h2 className="text-3xl font-bold mb-4 text-foreground">Contact us</h2>
-            <p className="text-muted-foreground mb-8">
-              Have questions? We're here to help you find your perfect home in Amsterdam.
-            </p>
-            <div className="space-y-4 text-muted-foreground">
-              <div className="flex items-center justify-center gap-2">
-                <MapPin className="w-5 h-5 text-primary" />
-                <p>{contact.address}, {contact.city}, {contact.country}</p>
+          <SectionReveal>
+            <div className="flex items-center justify-center gap-3 mb-2">
+              <div className="p-2 rounded-lg bg-primary/10">
+                <BookOpen className="w-5 h-5 text-primary" />
               </div>
-              <div className="flex items-center justify-center gap-2">
-                <Mail className="w-5 h-5 text-primary" />
+              <span className="text-sm font-medium text-primary uppercase tracking-wider">
+                The Reading Room
+              </span>
+            </div>
+          </SectionReveal>
+
+          <SectionReveal delay={100}>
+            <GreetingText
+              title="Stay informed"
+              subtitle="Latest insights and updates from the rental market"
+              className="mb-12"
+            />
+          </SectionReveal>
+        </div>
+        <BlogSection />
+      </section>
+
+      {/* Contact Section - "Reception" */}
+      <section id="contact" className="py-20 bg-muted/30">
+        <div className="container mx-auto px-4">
+          <SectionReveal>
+            <div className="flex items-center justify-center gap-3 mb-2">
+              <div className="p-2 rounded-lg bg-primary/10">
+                <Headphones className="w-5 h-5 text-primary" />
+              </div>
+              <span className="text-sm font-medium text-primary uppercase tracking-wider">
+                The Reception
+              </span>
+            </div>
+          </SectionReveal>
+
+          <SectionReveal delay={100}>
+            <GreetingText
+              title="We're here to help"
+              subtitle="Have questions? Our team is ready to assist you in finding your perfect home."
+              className="mb-12"
+            />
+          </SectionReveal>
+
+          <SectionReveal delay={200}>
+            <div className="max-w-2xl mx-auto">
+              <div className="glass rounded-2xl p-8 space-y-6">
+                <div className="flex items-center gap-4 p-4 rounded-xl bg-background/50 hover-lift cursor-pointer">
+                  <div className="p-3 rounded-full bg-primary/10">
+                    <MapPin className="w-6 h-6 text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Address</p>
+                    <p className="font-medium text-foreground">{contact.address}, {contact.city}, {contact.country}</p>
+                  </div>
+                </div>
+
                 <a 
-                  href={`mailto:${contact.email}`} 
-                  className="hover:text-primary transition-colors"
+                  href={`mailto:${contact.email}`}
                   onClick={() => handleContactClick('email')}
+                  className="flex items-center gap-4 p-4 rounded-xl bg-background/50 hover-lift block"
                 >
-                  {contact.email}
+                  <div className="p-3 rounded-full bg-primary/10">
+                    <Mail className="w-6 h-6 text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Email</p>
+                    <p className="font-medium text-foreground">{contact.email}</p>
+                  </div>
                 </a>
-              </div>
-              <div className="flex items-center justify-center gap-2">
-                <Phone className="w-5 h-5 text-primary" />
+
                 <a 
-                  href={`tel:${contact.phone}`} 
-                  className="hover:text-primary transition-colors"
+                  href={`tel:${contact.phone}`}
                   onClick={() => handleContactClick('phone')}
+                  className="flex items-center gap-4 p-4 rounded-xl bg-background/50 hover-lift block"
                 >
-                  {contact.phone}
+                  <div className="p-3 rounded-full bg-primary/10">
+                    <Phone className="w-6 h-6 text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Phone</p>
+                    <p className="font-medium text-foreground">{contact.phone}</p>
+                  </div>
                 </a>
               </div>
             </div>
-          </div>
+          </SectionReveal>
         </div>
       </section>
 

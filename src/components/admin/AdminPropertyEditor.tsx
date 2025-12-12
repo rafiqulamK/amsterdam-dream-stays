@@ -9,6 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { X, Plus, Upload, Loader2, Image as ImageIcon } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
+import VideoUploader from '@/components/VideoUploader';
 
 interface Property {
   id?: string;
@@ -24,6 +25,7 @@ interface Property {
   available_from: string;
   amenities: string[];
   images: string[];
+  videos?: string[];
   status?: string;
   owner_id?: string;
 }
@@ -61,6 +63,7 @@ const AdminPropertyEditor = ({ property, onSave, onCancel }: AdminPropertyEditor
     available_from: property?.available_from || new Date().toISOString().split('T')[0],
     amenities: property?.amenities || [],
     images: property?.images || [],
+    videos: property?.videos || [],
     status: property?.status || 'approved',
   });
 
@@ -146,6 +149,7 @@ const AdminPropertyEditor = ({ property, onSave, onCancel }: AdminPropertyEditor
         available_from: formData.available_from,
         amenities: formData.amenities,
         images: formData.images,
+        videos: formData.videos,
         status: formData.status,
         owner_id: property?.id ? undefined : user.id,
       };
@@ -418,6 +422,19 @@ const AdminPropertyEditor = ({ property, onSave, onCancel }: AdminPropertyEditor
             ))}
           </div>
         )}
+      </div>
+
+      {/* Videos */}
+      <div>
+        <Label>Videos (Optional)</Label>
+        <p className="text-sm text-muted-foreground mb-3">
+          Upload property tour videos to showcase your listing
+        </p>
+        <VideoUploader
+          videos={formData.videos || []}
+          onVideosChange={(videos) => setFormData({ ...formData, videos })}
+          maxVideos={3}
+        />
       </div>
 
       {/* Actions */}
