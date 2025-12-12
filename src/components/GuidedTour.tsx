@@ -21,9 +21,11 @@ import {
   Bed,
   Bath,
   Check,
-  Footprints
+  Footprints,
+  ArrowRight
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import HomepageLeadForm from './HomepageLeadForm';
 
 interface TourStep {
   id: string;
@@ -103,6 +105,7 @@ const GuidedTour = ({ isOpen, onClose }: GuidedTourProps) => {
   const [highlightRect, setHighlightRect] = useState<DOMRect | null>(null);
   const [visitedRooms, setVisitedRooms] = useState<Set<number>>(new Set([0]));
   const [showWalkingPath, setShowWalkingPath] = useState(false);
+  const [showLeadForm, setShowLeadForm] = useState(false);
   
   // Touch gesture state
   const [touchStart, setTouchStart] = useState<{ x: number; y: number } | null>(null);
@@ -691,15 +694,36 @@ const GuidedTour = ({ isOpen, onClose }: GuidedTourProps) => {
         </div>
       </div>
 
-      {/* Tour completion celebration */}
+      {/* Tour completion celebration with CTA */}
       {currentStep === tourSteps.length - 1 && showTooltip && (
         <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 animate-fade-in">
-          <div className="px-4 py-2 rounded-full bg-primary text-primary-foreground font-medium text-sm flex items-center gap-2">
-            <Check className="w-4 h-4" aria-hidden="true" />
-            <span>Tour Complete! {visitedRooms.size}/{tourSteps.length} rooms visited</span>
+          <div className="flex flex-col items-center gap-3">
+            <div className="px-4 py-2 rounded-full bg-primary text-primary-foreground font-medium text-sm flex items-center gap-2">
+              <Check className="w-4 h-4" aria-hidden="true" />
+              <span>Tour Complete! {visitedRooms.size}/{tourSteps.length} rooms visited</span>
+            </div>
+            <Button 
+              size="lg"
+              className="gap-2 animate-scale-in"
+              onClick={() => {
+                setShowLeadForm(true);
+                trigger('selection');
+              }}
+            >
+              <Home className="w-5 h-5" />
+              Find Your Perfect Home
+              <ArrowRight className="w-4 h-4" />
+            </Button>
           </div>
         </div>
       )}
+
+      {/* Lead Form after tour completion */}
+      <HomepageLeadForm 
+        open={showLeadForm} 
+        onOpenChange={setShowLeadForm}
+        source="tour_completion"
+      />
     </div>
   );
 };

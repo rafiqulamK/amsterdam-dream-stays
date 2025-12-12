@@ -10,7 +10,8 @@ import {
   Sparkles, 
   Zap, 
   MessageSquare,
-  Check
+  Check,
+  Home
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -71,9 +72,10 @@ const TOUR_STEPS: PropertyTourStep[] = [
 interface PropertyTourProps {
   isOpen: boolean;
   onClose: () => void;
+  onComplete?: () => void;
 }
 
-const PropertyTour = ({ isOpen, onClose }: PropertyTourProps) => {
+const PropertyTour = ({ isOpen, onClose, onComplete }: PropertyTourProps) => {
   const [currentStep, setCurrentStep] = useState(0);
   const [visitedSteps, setVisitedSteps] = useState<Set<number>>(new Set([0]));
   const [isTransitioning, setIsTransitioning] = useState(false);
@@ -108,8 +110,12 @@ const PropertyTour = ({ isOpen, onClose }: PropertyTourProps) => {
     } else {
       trigger('success');
       onClose();
+      // Trigger lead form after tour completion
+      if (onComplete) {
+        setTimeout(() => onComplete(), 300);
+      }
     }
-  }, [currentStep, goToStep, onClose, trigger]);
+  }, [currentStep, goToStep, onClose, onComplete, trigger]);
 
   const prevStep = useCallback(() => {
     if (currentStep > 0) {

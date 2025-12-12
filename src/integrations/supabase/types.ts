@@ -90,6 +90,7 @@ export type Database = {
           price_range: string | null
           property_id: string | null
           property_type_preference: string | null
+          source: string | null
           status: string | null
           updated_at: string | null
         }
@@ -112,6 +113,7 @@ export type Database = {
           price_range?: string | null
           property_id?: string | null
           property_type_preference?: string | null
+          source?: string | null
           status?: string | null
           updated_at?: string | null
         }
@@ -134,6 +136,7 @@ export type Database = {
           price_range?: string | null
           property_id?: string | null
           property_type_preference?: string | null
+          source?: string | null
           status?: string | null
           updated_at?: string | null
         }

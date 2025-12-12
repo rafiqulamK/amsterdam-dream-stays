@@ -10,11 +10,15 @@ import GreetingText from "@/components/GreetingText";
 import TourLauncher from "@/components/TourLauncher";
 import RoomWalkthrough from "@/components/RoomWalkthrough";
 import RoomSign from "@/components/RoomSign";
+import FloatingCTA from "@/components/FloatingCTA";
+import ExitIntentPopup from "@/components/ExitIntentPopup";
+import HomepageLeadForm from "@/components/HomepageLeadForm";
 import { useProperties } from "@/hooks/useProperties";
 import { useContactSettings } from "@/hooks/useContactSettings";
 import { useFacebookPixel } from "@/hooks/useFacebookPixel";
-import { Search, Shield, Zap, MapPin, Phone, Mail, Home, BookOpen, Headphones, Sparkles } from "lucide-react";
+import { Search, Shield, Zap, MapPin, Phone, Mail, Home, BookOpen, Headphones, Sparkles, Send } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
 
 const features = [
   {
@@ -36,6 +40,7 @@ const features = [
 
 const Index = () => {
   const [showWelcome, setShowWelcome] = useState(true);
+  const [showContactForm, setShowContactForm] = useState(false);
   const { data: properties, isLoading } = useProperties("Amsterdam");
   const { settings: contact } = useContactSettings();
   const { trackEvent } = useFacebookPixel();
@@ -229,45 +234,73 @@ const Index = () => {
             </SectionReveal>
 
             <SectionReveal delay={200}>
-              <div className="max-w-2xl mx-auto">
-                <div className="glass rounded-2xl p-8 space-y-6">
-                  <div className="flex items-center gap-4 p-4 rounded-xl bg-background/50 hover-lift cursor-pointer">
-                    <div className="p-3 rounded-full bg-primary/10">
-                      <MapPin className="w-6 h-6 text-primary" aria-label="Address" />
+              <div className="max-w-3xl mx-auto">
+                <div className="grid md:grid-cols-2 gap-6">
+                  {/* Contact Info */}
+                  <div className="glass rounded-2xl p-6 space-y-4">
+                    <h3 className="font-semibold text-foreground mb-4">Get in Touch</h3>
+                    
+                    <div className="flex items-center gap-4 p-3 rounded-xl bg-background/50">
+                      <div className="p-2 rounded-full bg-primary/10">
+                        <MapPin className="w-5 h-5 text-primary" aria-label="Address" />
+                      </div>
+                      <div>
+                        <p className="text-xs text-muted-foreground">Address</p>
+                        <p className="text-sm font-medium text-foreground">{contact.address}, {contact.city}</p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">Address</p>
-                      <p className="font-medium text-foreground">{contact.address}, {contact.city}, {contact.country}</p>
-                    </div>
+
+                    <a 
+                      href={`mailto:${contact.email}`}
+                      onClick={() => handleContactClick('email')}
+                      className="flex items-center gap-4 p-3 rounded-xl bg-background/50 hover:bg-background/70 transition-colors block"
+                    >
+                      <div className="p-2 rounded-full bg-primary/10">
+                        <Mail className="w-5 h-5 text-primary" aria-label="Email" />
+                      </div>
+                      <div>
+                        <p className="text-xs text-muted-foreground">Email</p>
+                        <p className="text-sm font-medium text-foreground">{contact.email}</p>
+                      </div>
+                    </a>
+
+                    <a 
+                      href={`tel:${contact.phone}`}
+                      onClick={() => handleContactClick('phone')}
+                      className="flex items-center gap-4 p-3 rounded-xl bg-background/50 hover:bg-background/70 transition-colors block"
+                    >
+                      <div className="p-2 rounded-full bg-primary/10">
+                        <Phone className="w-5 h-5 text-primary" aria-label="Phone" />
+                      </div>
+                      <div>
+                        <p className="text-xs text-muted-foreground">Phone</p>
+                        <p className="text-sm font-medium text-foreground">{contact.phone}</p>
+                      </div>
+                    </a>
                   </div>
 
-                  <a 
-                    href={`mailto:${contact.email}`}
-                    onClick={() => handleContactClick('email')}
-                    className="flex items-center gap-4 p-4 rounded-xl bg-background/50 hover-lift block"
-                  >
-                    <div className="p-3 rounded-full bg-primary/10">
-                      <Mail className="w-6 h-6 text-primary" aria-label="Email" />
+                  {/* Lead Capture Card */}
+                  <div className="glass rounded-2xl p-6 flex flex-col justify-center">
+                    <div className="text-center">
+                      <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-primary/10 flex items-center justify-center">
+                        <Send className="w-8 h-8 text-primary" />
+                      </div>
+                      <h3 className="text-xl font-semibold text-foreground mb-2">
+                        Let Us Find Your Home
+                      </h3>
+                      <p className="text-muted-foreground mb-6">
+                        Tell us what you're looking for and we'll send you personalized matches.
+                      </p>
+                      <Button 
+                        size="lg" 
+                        className="w-full gap-2"
+                        onClick={() => setShowContactForm(true)}
+                      >
+                        <Home className="w-5 h-5" />
+                        Start Your Search
+                      </Button>
                     </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">Email</p>
-                      <p className="font-medium text-foreground">{contact.email}</p>
-                    </div>
-                  </a>
-
-                  <a 
-                    href={`tel:${contact.phone}`}
-                    onClick={() => handleContactClick('phone')}
-                    className="flex items-center gap-4 p-4 rounded-xl bg-background/50 hover-lift block"
-                  >
-                    <div className="p-3 rounded-full bg-primary/10">
-                      <Phone className="w-6 h-6 text-primary" aria-label="Phone" />
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">Phone</p>
-                      <p className="font-medium text-foreground">{contact.phone}</p>
-                    </div>
-                  </a>
+                  </div>
                 </div>
               </div>
             </SectionReveal>
@@ -279,6 +312,19 @@ const Index = () => {
       
       {/* Guided Tour Launcher */}
       <TourLauncher />
+
+      {/* Floating CTA */}
+      <FloatingCTA />
+
+      {/* Exit Intent Popup */}
+      <ExitIntentPopup />
+
+      {/* Homepage Lead Form */}
+      <HomepageLeadForm 
+        open={showContactForm} 
+        onOpenChange={setShowContactForm}
+        source="contact_section"
+      />
     </div>
   );
 };

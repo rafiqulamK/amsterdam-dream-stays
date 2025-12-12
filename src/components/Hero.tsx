@@ -1,13 +1,16 @@
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Search } from "lucide-react";
+import { Search, Home } from "lucide-react";
 import { useHeroSettings } from "@/hooks/useHeroSettings";
 import { useFacebookPixel } from "@/hooks/useFacebookPixel";
 import heroImage from "@/assets/hero-rental.jpg";
+import HomepageLeadForm from "./HomepageLeadForm";
 
 const Hero = () => {
   const [searchQuery, setSearchQuery] = useState("");
+  const [isFormOpen, setIsFormOpen] = useState(false);
   const { settings, loading } = useHeroSettings();
   const { trackEvent } = useFacebookPixel();
 
@@ -92,7 +95,7 @@ const Hero = () => {
             </div>
 
             {/* Popular Areas */}
-            <div>
+            <div className="mb-6">
               <span className="text-sm text-muted-foreground">Popular areas: </span>
               <span className="text-sm">
                 {settings.popular_areas.map((area, idx) => (
@@ -105,9 +108,25 @@ const Hero = () => {
                 ))}
               </span>
             </div>
+
+            {/* Primary CTA Button */}
+            <Button 
+              size="lg" 
+              className="w-full gap-2"
+              onClick={() => setIsFormOpen(true)}
+            >
+              <Home className="w-5 h-5" />
+              Get Personalized Matches
+            </Button>
           </div>
         </div>
       </div>
+
+      <HomepageLeadForm 
+        open={isFormOpen} 
+        onOpenChange={setIsFormOpen}
+        source="hero_cta"
+      />
     </section>
   );
 };
