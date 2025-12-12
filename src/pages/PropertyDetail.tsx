@@ -473,7 +473,8 @@ const PropertyDetail = () => {
         onClose={() => {
           setIsTourOpen(false);
           trigger('tourComplete');
-        }} 
+        }}
+        onComplete={() => setIsQuestionnaireOpen(true)}
       />
 
       <ImmersiveLeadForm

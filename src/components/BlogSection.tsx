@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, Newspaper, Calendar } from 'lucide-react';
+import NewsletterSignup from './NewsletterSignup';
 
 interface BlogPost {
   id: string;
@@ -124,13 +125,18 @@ const BlogSection = () => {
           ))}
         </div>
 
-        <div className="text-center mt-8">
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mt-8">
           <Link to="/blog">
             <Button variant="outline" size="lg" className="gap-2">
               View All News
               <ArrowRight className="w-4 h-4" />
             </Button>
           </Link>
+        </div>
+
+        {/* Newsletter Signup */}
+        <div className="max-w-md mx-auto mt-12">
+          <NewsletterSignup variant="card" />
         </div>
       </div>
     </section>
