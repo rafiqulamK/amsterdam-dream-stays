@@ -16,7 +16,13 @@ type HapticPattern =
   | 'roomEnter'
   | 'swipe'
   | 'tap'
-  | 'doubleTap';
+  | 'doubleTap'
+  // Property-specific patterns
+  | 'propertyEnter'
+  | 'gallerySwipe'
+  | 'sectionReveal'
+  | 'tourStart'
+  | 'tourComplete';
 
 export const useHaptics = () => {
   const isSupported = typeof navigator !== 'undefined' && 'vibrate' in navigator;
@@ -58,6 +64,13 @@ export const useHaptics = () => {
       swipe: [10, 20, 10],
       tap: 8,
       doubleTap: [8, 30, 8],
+      
+      // Property-specific patterns
+      propertyEnter: [25, 80, 35, 100, 45, 120, 35],
+      gallerySwipe: [12, 25, 12],
+      sectionReveal: [15, 40, 15, 40],
+      tourStart: [20, 50, 30, 70, 40],
+      tourComplete: [40, 60, 40, 60, 80, 100],
     };
 
     vibrate(patterns[type]);
