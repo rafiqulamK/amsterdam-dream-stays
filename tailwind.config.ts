@@ -152,6 +152,33 @@ export default {
           "0%": { transform: "rotateX(-10deg) rotateY(-10deg)", opacity: "0" },
           "100%": { transform: "rotateX(0) rotateY(0)", opacity: "1" },
         },
+        "footstep": {
+          "0%": { opacity: "0", transform: "scale(0.5) translateY(0)" },
+          "50%": { opacity: "1", transform: "scale(1) translateY(-10px)" },
+          "100%": { opacity: "0", transform: "scale(0.8) translateY(-20px)" },
+        },
+        "tour-door-left": {
+          "0%": { transform: "rotateY(0deg)" },
+          "50%": { transform: "rotateY(-90deg)" },
+          "100%": { transform: "rotateY(-90deg)", opacity: "0" },
+        },
+        "tour-door-right": {
+          "0%": { transform: "rotateY(0deg)" },
+          "50%": { transform: "rotateY(90deg)" },
+          "100%": { transform: "rotateY(90deg)", opacity: "0" },
+        },
+        "sound-wave": {
+          "0%, 100%": { height: "4px" },
+          "50%": { height: "16px" },
+        },
+        "swing": {
+          "0%, 100%": { transform: "rotate(-2deg)" },
+          "50%": { transform: "rotate(2deg)" },
+        },
+        "spotlight": {
+          "0%": { opacity: "0", transform: "scale(0.8)" },
+          "100%": { opacity: "1", transform: "scale(1)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -176,6 +203,12 @@ export default {
         "text-reveal": "text-reveal 1s ease-out forwards",
         "bounce-subtle": "bounce-subtle 2s ease-in-out infinite",
         "rotate-in": "rotate-in 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards",
+        "footstep": "footstep 0.8s ease-out forwards",
+        "tour-door-left": "tour-door-left 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards",
+        "tour-door-right": "tour-door-right 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards",
+        "sound-wave": "sound-wave 0.6s ease-in-out infinite",
+        "swing": "swing 3s ease-in-out infinite",
+        "spotlight": "spotlight 0.5s ease-out forwards",
       },
       backgroundImage: {
         'gradient-hero': 'var(--gradient-hero)',
