@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Compass, Footprints } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -12,10 +12,10 @@ const PropertyTourLauncher = ({ onStartTour }: PropertyTourLauncherProps) => {
   const [showHint, setShowHint] = useState(true);
 
   // Auto-hide hint after 5 seconds
-  useState(() => {
+  useEffect(() => {
     const timer = setTimeout(() => setShowHint(false), 5000);
     return () => clearTimeout(timer);
-  });
+  }, []);
 
   return (
     <div className="fixed bottom-6 right-6 z-40 flex flex-col items-end gap-2">
