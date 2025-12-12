@@ -113,4 +113,73 @@
   .text-balance {
     text-wrap: balance;
   }
+
+  /* Glassmorphism effects */
+  .glass {
+    @apply bg-background/80 backdrop-blur-md border border-border/50;
+  }
+
+  .glass-strong {
+    @apply bg-background/90 backdrop-blur-xl border border-border/30;
+  }
+
+  /* Shimmer loading effect */
+  .shimmer {
+    background: linear-gradient(
+      90deg,
+      hsl(var(--muted)) 25%,
+      hsl(var(--muted-foreground) / 0.1) 50%,
+      hsl(var(--muted)) 75%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 2s linear infinite;
+  }
+
+  /* Card hover lift effect */
+  .hover-lift {
+    @apply transition-all duration-300 ease-out;
+  }
+
+  .hover-lift:hover {
+    @apply -translate-y-2 shadow-lg;
+  }
+
+  /* Magnetic button effect container */
+  .magnetic-btn {
+    @apply relative overflow-hidden;
+  }
+
+  /* Gradient text */
+  .gradient-text {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-primary to-accent;
+  }
+
+  /* Smooth section transitions */
+  .section-fade {
+    @apply transition-all duration-700 ease-out;
+  }
+
+  /* Interactive card tilt base */
+  .card-tilt {
+    @apply transition-transform duration-200;
+    transform-style: preserve-3d;
+  }
+
+  /* Reduced motion support */
+  @media (prefers-reduced-motion: reduce) {
+    .animate-fade-in,
+    .animate-slide-up,
+    .animate-float,
+    .animate-door-open-left,
+    .animate-door-open-right,
+    .animate-shimmer {
+      animation: none !important;
+      opacity: 1 !important;
+      transform: none !important;
+    }
+
+    .hover-lift:hover {
+      transform: none !important;
+    }
+  }
 }

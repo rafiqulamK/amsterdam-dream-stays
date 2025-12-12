@@ -5,6 +5,8 @@ import { properties as staticProperties } from "@/data/properties";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import LeadQuestionnaireDialog from "@/components/LeadQuestionnaireDialog";
+import VideoPlayer from "@/components/VideoPlayer";
+import SectionReveal from "@/components/SectionReveal";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -23,17 +25,23 @@ import {
   Clock,
   Shield,
   Zap,
+  Play,
 } from "lucide-react";
 import { useFacebookPixel } from "@/hooks/useFacebookPixel";
 import { Property } from "@/types/property";
 
+interface PropertyWithVideos extends Property {
+  videos?: string[];
+}
+
 const PropertyDetail = () => {
   const { id } = useParams();
-  const [property, setProperty] = useState<Property | null>(null);
+  const [property, setProperty] = useState<PropertyWithVideos | null>(null);
   const [loading, setLoading] = useState(true);
   const [isQuestionnaireOpen, setIsQuestionnaireOpen] = useState(false);
   const [isFavorited, setIsFavorited] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [showVideos, setShowVideos] = useState(false);
   const { trackEvent } = useFacebookPixel();
 
   useEffect(() => {
@@ -64,11 +72,12 @@ const PropertyDetail = () => {
           amenities: data.amenities || [],
           image: data.images?.[0] || '/placeholder.svg',
           images: data.images || [],
+          videos: (data as any).videos || [],
           availableFrom: data.available_from,
         });
       } else {
         const staticProperty = staticProperties.find((p) => p.id === id);
-        setProperty(staticProperty || null);
+        setProperty(staticProperty ? { ...staticProperty, videos: [] } : null);
       }
       setLoading(false);
     };
@@ -91,6 +100,8 @@ const PropertyDetail = () => {
   const images = property?.images && property.images.length > 0 
     ? property.images 
     : property ? [property.image] : [];
+
+  const videos = property?.videos || [];
 
   const nextImage = () => {
     setCurrentImageIndex((prev) => (prev + 1) % images.length);
@@ -177,6 +188,15 @@ const PropertyDetail = () => {
 
           {/* Action Buttons */}
           <div className="absolute top-4 right-4 flex gap-2">
+            {videos.length > 0 && (
+              <button 
+                onClick={() => setShowVideos(!showVideos)}
+                className="p-2 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 transition-colors flex items-center gap-2 px-4"
+              >
+                <Play className="w-4 h-4" />
+                <span className="text-sm font-medium">Tour</span>
+              </button>
+            )}
             <button 
               onClick={() => {
                 const newState = !isFavorited;
@@ -200,6 +220,26 @@ const PropertyDetail = () => {
             </button>
           </div>
         </div>
+
+        {/* Video Gallery */}
+        {showVideos && videos.length > 0 && (
+          <div className="container mx-auto px-4 py-6">
+            <SectionReveal>
+              <h3 className="text-xl font-semibold mb-4 text-foreground">Property Tour Videos</h3>
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {videos.map((video, idx) => (
+                  <VideoPlayer
+                    key={idx}
+                    src={video}
+                    className="aspect-video"
+                    autoPlay={false}
+                    muted={true}
+                  />
+                ))}
+              </div>
+            </SectionReveal>
+          </div>
+        )}
 
         <div className="container mx-auto px-4 py-8">
           <Link to="/" className="inline-flex items-center text-primary hover:underline mb-6 text-sm">
