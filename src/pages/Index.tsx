@@ -7,6 +7,7 @@ import BlogSection from "@/components/BlogSection";
 import WelcomeDoor from "@/components/WelcomeDoor";
 import SectionReveal from "@/components/SectionReveal";
 import GreetingText from "@/components/GreetingText";
+import TourLauncher from "@/components/TourLauncher";
 import { useProperties } from "@/hooks/useProperties";
 import { useContactSettings } from "@/hooks/useContactSettings";
 import { useFacebookPixel } from "@/hooks/useFacebookPixel";
@@ -250,6 +251,9 @@ const Index = () => {
       </section>
 
       <Footer />
+      
+      {/* Guided Tour Launcher */}
+      <TourLauncher />
     </div>
   );
 };

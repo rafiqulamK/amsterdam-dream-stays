@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
+import { useHaptics } from '@/hooks/useHaptics';
 
 interface WelcomeDoorProps {
   onComplete?: () => void;
@@ -7,16 +8,26 @@ interface WelcomeDoorProps {
 
 const WelcomeDoor = ({ onComplete }: WelcomeDoorProps) => {
   const [phase, setPhase] = useState<'closed' | 'unlocking' | 'opening' | 'entering' | 'complete'>('closed');
+  const { trigger } = useHaptics();
 
   useEffect(() => {
     // Phase 1: Door unlock effect
-    const unlockTimer = setTimeout(() => setPhase('unlocking'), 800);
+    const unlockTimer = setTimeout(() => {
+      setPhase('unlocking');
+      trigger('light');
+    }, 800);
     
     // Phase 2: Doors start opening
-    const openTimer = setTimeout(() => setPhase('opening'), 1500);
+    const openTimer = setTimeout(() => {
+      setPhase('opening');
+      trigger('doorOpen');
+    }, 1500);
     
     // Phase 3: Walk through effect
-    const enterTimer = setTimeout(() => setPhase('entering'), 2800);
+    const enterTimer = setTimeout(() => {
+      setPhase('entering');
+      trigger('success');
+    }, 2800);
     
     // Phase 4: Complete
     const completeTimer = setTimeout(() => {
@@ -30,7 +41,7 @@ const WelcomeDoor = ({ onComplete }: WelcomeDoorProps) => {
       clearTimeout(enterTimer);
       clearTimeout(completeTimer);
     };
-  }, [onComplete]);
+  }, [onComplete, trigger]);
 
   if (phase === 'complete') return null;
 
