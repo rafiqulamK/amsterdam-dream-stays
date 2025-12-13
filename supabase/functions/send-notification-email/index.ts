@@ -277,20 +277,24 @@ const handler = async (req: Request): Promise<Response> => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  // Optional webhook secret validation - if configured, validates the request
-  // This can be configured later from the admin dashboard
+  // Verify authentication - require either webhook secret or JWT
   const webhookSecret = Deno.env.get("EMAIL_WEBHOOK_SECRET");
-  if (webhookSecret) {
-    const providedSecret = req.headers.get("x-webhook-secret");
-    if (providedSecret !== webhookSecret) {
-      console.warn("Invalid or missing webhook secret");
-      return new Response(
-        JSON.stringify({ error: "Unauthorized" }),
-        { status: 401, headers: { "Content-Type": "application/json", ...corsHeaders } }
-      );
+  const providedSecret = req.headers.get("x-webhook-secret");
+  const authHeader = req.headers.get("authorization");
+  const hasValidJWT = authHeader?.startsWith("Bearer ") && authHeader.length > 10;
+  
+  // Check authentication
+  const hasValidWebhookSecret = webhookSecret && providedSecret === webhookSecret;
+  
+  if (!hasValidWebhookSecret && !hasValidJWT) {
+    console.error("Authentication failed - no valid webhook secret or JWT provided");
+    if (!webhookSecret) {
+      console.warn("EMAIL_WEBHOOK_SECRET not configured - add it in Supabase secrets");
     }
-  } else {
-    console.warn("EMAIL_WEBHOOK_SECRET not configured - endpoint is unprotected. Configure it in admin settings for security.");
+    return new Response(
+      JSON.stringify({ error: "Unauthorized - authentication required" }),
+      { status: 401, headers: { "Content-Type": "application/json", ...corsHeaders } }
+    );
   }
 
   try {
