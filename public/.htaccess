@@ -4,7 +4,7 @@
 
   # Force HTTPS for production (hause.ink)
   RewriteCond %{HTTPS} off
-  RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+  RewriteRule ^(.*)$ https://hause.ink%{REQUEST_URI} [L,R=301]
 
   # Handle Authorization Header
   RewriteCond %{HTTP:Authorization} .

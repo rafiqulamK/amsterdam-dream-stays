@@ -2,7 +2,7 @@
 
 This document provides detailed technical information for deploying the Amsterdam Dream Stays property rental platform to cPanel shared hosting with MySQL backend.
 
-**Production Domain:** https://your-domain.com
+**Production Domain:** https://hause.ink
 
 ## Table of Contents
 
@@ -352,7 +352,7 @@ phpinfo();
 ?>
 ```
 
-Visit `https://your-domain.com/phpinfo.php` and check:
+Visit `https://hause.ink/phpinfo.php` and check:
 - PHP version ≥ 7.4
 - `pdo_mysql` extension loaded
 - `file_uploads = On`

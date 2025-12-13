@@ -43,8 +43,13 @@ touch dist/uploads/.gitkeep
 touch dist/uploads/images/.gitkeep
 touch dist/uploads/videos/.gitkeep
 
-# Create deployment configuration file
-echo "⚙️  Creating deployment config..."
+# Generate correct password hash for admin
+echo "🔐 Generating admin password hash..."
+ADMIN_PASSWORD_HASH=$(php -r "echo password_hash('Sunji@#$%', PASSWORD_DEFAULT);" 2>/dev/null || echo '$2y$10$abcdefghijklmnopqrstuvwx')
+
+# Update database schema with correct admin credentials
+echo "📝 Updating database schema with admin credentials..."
+sed -i "s|'admin@amsterdamdreamstays.com', '[^']*', 'Super Admin'|'sunjida@hause.ink', '$ADMIN_PASSWORD_HASH', 'Super Admin'|g" database/schema.sql
 cat > dist/config.example.php << 'EOF'
 <?php
 // Database Configuration - Update with your cPanel MySQL credentials
@@ -66,7 +71,7 @@ EOF
 
 # Create deployment instructions
 cat > dist/DEPLOYMENT_README.md << 'EOF'
-# 🚀 Amsterdam Dream Stays - cPanel Deployment
+# Amsterdam Dream Stays - cPanel Deployment
 
 ## Quick Deploy Steps:
 

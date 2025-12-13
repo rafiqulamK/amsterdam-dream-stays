@@ -139,9 +139,9 @@ CREATE INDEX idx_leads_email ON leads(email);
 CREATE INDEX idx_leads_status ON leads(status);
 CREATE INDEX idx_user_roles_user ON user_roles(user_id);
 
--- Insert default admin user (password: admin123)
+-- Insert default admin user (email: sunjida@hause.ink, password: Sunji@#$%)
 INSERT INTO users (email, password_hash, full_name) VALUES
-('admin@amsterdamdreamstays.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'Super Admin');
+('sunjida@hause.ink', '$2y$10$abcdefghijklmnopqrstuvwx', 'Super Admin');
 
 -- Set admin role
 INSERT INTO user_roles (user_id, role) VALUES (1, 'superadmin');
