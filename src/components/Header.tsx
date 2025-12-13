@@ -18,7 +18,7 @@ const Header = () => {
   const navLinks = [
     { name: "Frontpage", path: "/" },
     { name: "Find Properties", path: "/#properties" },
-    { name: "News", path: "/blog" },
+    { name: "Blog", path: "/blog" },
     { name: "Contact us", path: "/#contact" },
   ];
 
@@ -91,13 +91,15 @@ const Header = () => {
           <div className="flex items-center gap-2 md:hidden">
             <ThemeToggle />
             <button
-              className="p-2"
+              className="p-2 rounded-md hover:bg-muted transition-colors"
               onClick={() => setIsMenuOpen(!isMenuOpen)}
+              aria-label={isMenuOpen ? "Close menu" : "Open menu"}
+              aria-expanded={isMenuOpen}
             >
               {isMenuOpen ? (
-                <X className="w-6 h-6" />
+                <X className="w-6 h-6" aria-hidden="true" />
               ) : (
-                <Menu className="w-6 h-6" />
+                <Menu className="w-6 h-6" aria-hidden="true" />
               )}
             </button>
           </div>

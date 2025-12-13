@@ -1,5 +1,8 @@
+import { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Image, Star, LayoutGrid, Search, Mail, Phone, Activity, FormInput, FileText, Users, Share2, ImageIcon, BarChart3, Palette } from 'lucide-react';
+import { useIsMobile } from '@/hooks/use-mobile';
 import HeroSectionEditor from './HeroSectionEditor';
 import FeaturedPropertiesPicker from './FeaturedPropertiesPicker';
 import SectionVisibilityManager from './SectionVisibilityManager';
@@ -15,124 +18,131 @@ import SocialLinksEditor from './SocialLinksEditor';
 import MediaLibraryManager from './MediaLibraryManager';
 import BrandingSettingsEditor from './BrandingSettingsEditor';
 
+const settingsGroups = [
+  {
+    id: 'appearance',
+    title: 'Appearance',
+    items: [
+      { value: 'branding', label: 'Branding', icon: Palette, component: BrandingSettingsEditor },
+      { value: 'hero', label: 'Hero', icon: Image, component: HeroSectionEditor },
+      { value: 'sections', label: 'Sections', icon: LayoutGrid, component: SectionVisibilityManager },
+    ],
+  },
+  {
+    id: 'content',
+    title: 'Content',
+    items: [
+      { value: 'featured', label: 'Featured', icon: Star, component: FeaturedPropertiesPicker },
+      { value: 'pages', label: 'Pages', icon: FileText, component: CMSPagesManager },
+      { value: 'media', label: 'Media', icon: ImageIcon, component: MediaLibraryManager },
+    ],
+  },
+  {
+    id: 'lead-capture',
+    title: 'Lead Capture',
+    items: [
+      { value: 'lead-form', label: 'Lead Form', icon: FormInput, component: LeadFormConfigManager },
+      { value: 'email', label: 'Email', icon: Mail, component: EmailNotificationSettings },
+    ],
+  },
+  {
+    id: 'marketing',
+    title: 'Marketing & SEO',
+    items: [
+      { value: 'seo', label: 'SEO', icon: Search, component: SEOSettingsEditor },
+      { value: 'pixel', label: 'FB Pixel', icon: Activity, component: FacebookPixelSettings },
+      { value: 'analytics', label: 'Analytics', icon: BarChart3, component: GoogleAnalyticsSettings },
+    ],
+  },
+  {
+    id: 'contact',
+    title: 'Contact & Social',
+    items: [
+      { value: 'contact', label: 'Contact', icon: Phone, component: ContactSettingsEditor },
+      { value: 'social', label: 'Social', icon: Share2, component: SocialLinksEditor },
+    ],
+  },
+  {
+    id: 'users',
+    title: 'User Management',
+    items: [
+      { value: 'users', label: 'Users', icon: Users, component: UserRolesManager },
+    ],
+  },
+];
+
+const allItems = settingsGroups.flatMap(group => group.items);
+
 const AdminSettingsManager = () => {
+  const isMobile = useIsMobile();
+  const [activeTab, setActiveTab] = useState('branding');
+
+  // Mobile: Use accordion layout
+  if (isMobile) {
+    return (
+      <div className="space-y-4">
+        <Accordion type="single" collapsible className="w-full">
+          {settingsGroups.map((group) => (
+            <AccordionItem key={group.id} value={group.id}>
+              <AccordionTrigger className="text-base font-semibold">
+                {group.title}
+              </AccordionTrigger>
+              <AccordionContent className="space-y-2 pt-2">
+                {group.items.map((item) => {
+                  const Icon = item.icon;
+                  const Component = item.component;
+                  return (
+                    <Accordion key={item.value} type="single" collapsible>
+                      <AccordionItem value={item.value} className="border rounded-lg px-3">
+                        <AccordionTrigger className="py-3">
+                          <div className="flex items-center gap-2">
+                            <Icon className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                            <span>{item.label}</span>
+                          </div>
+                        </AccordionTrigger>
+                        <AccordionContent className="pb-4">
+                          <Component />
+                        </AccordionContent>
+                      </AccordionItem>
+                    </Accordion>
+                  );
+                })}
+              </AccordionContent>
+            </AccordionItem>
+          ))}
+        </Accordion>
+      </div>
+    );
+  }
+
+  // Desktop: Use tabs layout
   return (
     <div className="space-y-6">
-      <Tabs defaultValue="branding" className="w-full">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="flex flex-wrap h-auto gap-1 p-1">
-          <TabsTrigger value="branding" className="flex items-center gap-1">
-            <Palette className="h-4 w-4" />
-            <span className="hidden sm:inline">Branding</span>
-          </TabsTrigger>
-          <TabsTrigger value="hero" className="flex items-center gap-1">
-            <Image className="h-4 w-4" />
-            <span className="hidden sm:inline">Hero</span>
-          </TabsTrigger>
-          <TabsTrigger value="featured" className="flex items-center gap-1">
-            <Star className="h-4 w-4" />
-            <span className="hidden sm:inline">Featured</span>
-          </TabsTrigger>
-          <TabsTrigger value="sections" className="flex items-center gap-1">
-            <LayoutGrid className="h-4 w-4" />
-            <span className="hidden sm:inline">Sections</span>
-          </TabsTrigger>
-          <TabsTrigger value="pages" className="flex items-center gap-1">
-            <FileText className="h-4 w-4" />
-            <span className="hidden sm:inline">Pages</span>
-          </TabsTrigger>
-          <TabsTrigger value="media" className="flex items-center gap-1">
-            <ImageIcon className="h-4 w-4" />
-            <span className="hidden sm:inline">Media</span>
-          </TabsTrigger>
-          <TabsTrigger value="lead-form" className="flex items-center gap-1">
-            <FormInput className="h-4 w-4" />
-            <span className="hidden sm:inline">Lead Form</span>
-          </TabsTrigger>
-          <TabsTrigger value="pixel" className="flex items-center gap-1">
-            <Activity className="h-4 w-4" />
-            <span className="hidden sm:inline">FB Pixel</span>
-          </TabsTrigger>
-          <TabsTrigger value="analytics" className="flex items-center gap-1">
-            <BarChart3 className="h-4 w-4" />
-            <span className="hidden sm:inline">Analytics</span>
-          </TabsTrigger>
-          <TabsTrigger value="seo" className="flex items-center gap-1">
-            <Search className="h-4 w-4" />
-            <span className="hidden sm:inline">SEO</span>
-          </TabsTrigger>
-          <TabsTrigger value="email" className="flex items-center gap-1">
-            <Mail className="h-4 w-4" />
-            <span className="hidden sm:inline">Email</span>
-          </TabsTrigger>
-          <TabsTrigger value="contact" className="flex items-center gap-1">
-            <Phone className="h-4 w-4" />
-            <span className="hidden sm:inline">Contact</span>
-          </TabsTrigger>
-          <TabsTrigger value="social" className="flex items-center gap-1">
-            <Share2 className="h-4 w-4" />
-            <span className="hidden sm:inline">Social</span>
-          </TabsTrigger>
-          <TabsTrigger value="users" className="flex items-center gap-1">
-            <Users className="h-4 w-4" />
-            <span className="hidden sm:inline">Users</span>
-          </TabsTrigger>
+          {allItems.map((item) => {
+            const Icon = item.icon;
+            return (
+              <TabsTrigger 
+                key={item.value} 
+                value={item.value} 
+                className="flex items-center gap-1"
+              >
+                <Icon className="h-4 w-4" aria-hidden="true" />
+                <span className="hidden sm:inline">{item.label}</span>
+              </TabsTrigger>
+            );
+          })}
         </TabsList>
 
-        <TabsContent value="branding" className="mt-6">
-          <BrandingSettingsEditor />
-        </TabsContent>
-
-        <TabsContent value="hero" className="mt-6">
-          <HeroSectionEditor />
-        </TabsContent>
-
-        <TabsContent value="featured" className="mt-6">
-          <FeaturedPropertiesPicker />
-        </TabsContent>
-
-        <TabsContent value="sections" className="mt-6">
-          <SectionVisibilityManager />
-        </TabsContent>
-
-        <TabsContent value="pages" className="mt-6">
-          <CMSPagesManager />
-        </TabsContent>
-
-        <TabsContent value="media" className="mt-6">
-          <MediaLibraryManager />
-        </TabsContent>
-
-        <TabsContent value="lead-form" className="mt-6">
-          <LeadFormConfigManager />
-        </TabsContent>
-
-        <TabsContent value="pixel" className="mt-6">
-          <FacebookPixelSettings />
-        </TabsContent>
-
-        <TabsContent value="analytics" className="mt-6">
-          <GoogleAnalyticsSettings />
-        </TabsContent>
-
-        <TabsContent value="seo" className="mt-6">
-          <SEOSettingsEditor />
-        </TabsContent>
-
-        <TabsContent value="email" className="mt-6">
-          <EmailNotificationSettings />
-        </TabsContent>
-
-        <TabsContent value="contact" className="mt-6">
-          <ContactSettingsEditor />
-        </TabsContent>
-
-        <TabsContent value="social" className="mt-6">
-          <SocialLinksEditor />
-        </TabsContent>
-
-        <TabsContent value="users" className="mt-6">
-          <UserRolesManager />
-        </TabsContent>
+        {allItems.map((item) => {
+          const Component = item.component;
+          return (
+            <TabsContent key={item.value} value={item.value} className="mt-6">
+              <Component />
+            </TabsContent>
+          );
+        })}
       </Tabs>
     </div>
   );

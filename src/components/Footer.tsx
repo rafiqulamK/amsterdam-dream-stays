@@ -73,16 +73,18 @@ const Footer = () => {
                 href={`mailto:${contact.email}`} 
                 className="flex items-center gap-2 text-white/80 hover:text-white transition-colors"
                 onClick={() => handleContactClick('email')}
+                aria-label={`Email us at ${contact.email}`}
               >
-                <Mail className="w-4 h-4" />
+                <Mail className="w-4 h-4" aria-hidden="true" />
                 {contact.email}
               </a>
               <a 
                 href={`tel:${contact.phone}`} 
                 className="flex items-center gap-2 text-white/80 hover:text-white transition-colors"
                 onClick={() => handleContactClick('phone')}
+                aria-label={`Call us at ${contact.phone}`}
               >
-                <Phone className="w-4 h-4" />
+                <Phone className="w-4 h-4" aria-hidden="true" />
                 {contact.phone}
               </a>
             </div>

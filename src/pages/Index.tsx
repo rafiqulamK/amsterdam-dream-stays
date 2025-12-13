@@ -72,10 +72,11 @@ const Index = () => {
 
       <Header />
       
-      {/* Hero Section - "Lobby" */}
-      <div data-tour-target="hero">
-        <Hero />
-      </div>
+      <main id="main-content">
+        {/* Hero Section - "Lobby" */}
+        <div data-tour-target="hero">
+          <Hero />
+        </div>
 
       {/* Featured Properties Section - "Living Room" */}
       <RoomWalkthrough
@@ -307,6 +308,7 @@ const Index = () => {
           </div>
         </section>
       </RoomWalkthrough>
+      </main>
 
       <Footer />
       
