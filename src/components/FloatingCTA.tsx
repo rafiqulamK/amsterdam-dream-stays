@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Home, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { zIndex } from '@/styles/z-index';
 import HomepageLeadForm from './HomepageLeadForm';
 
 const FloatingCTA = () => {
@@ -43,9 +44,10 @@ const FloatingCTA = () => {
     <>
       <div 
         className={cn(
-          'fixed bottom-6 left-6 z-40 transition-all duration-500',
+          'fixed bottom-6 left-6 transition-all duration-500',
           'animate-fade-in'
         )}
+        style={{ zIndex: zIndex.floatingCTA }}
       >
         <div className="relative">
           {/* Dismiss button */}

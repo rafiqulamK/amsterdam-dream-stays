@@ -12,7 +12,8 @@ interface EmailRequest {
 }
 
 // Logo URL - uses Supabase storage, with fallback to text if image fails
-const LOGO_URL = "https://myjfenyrbpzjzsafpwyn.supabase.co/storage/v1/object/public/media/haus-logo.png";
+const LOGO_URL = "https://xrbbtqfbomsycghnzpqj.supabase.co/storage/v1/object/public/media/hause-logo.png";
+const SITE_DOMAIN = "hause.link";
 
 // Fallback logo HTML (text-based) for when image doesn't load
 const getLogoHtml = () => `
@@ -195,12 +196,12 @@ const getEmailTemplate = (type: string, data: Record<string, string>) => {
             </div>
             
             <div style="text-align: center; margin-top: 32px;">
-              <a href="https://hause.ink" style="${buttonStyles}">Browse More Properties</a>
+              <a href="https://${SITE_DOMAIN}" style="${buttonStyles}">Browse More Properties</a>
             </div>
             
             <p style="color: #64748b; font-size: 14px; margin-top: 24px;">
               If you have any questions, feel free to reply to this email or contact us at 
-              <a href="mailto:info@hause.ink" style="color: #1a1a2e;">info@hause.ink</a>
+              <a href="mailto:info@${SITE_DOMAIN}" style="color: #1a1a2e;">info@${SITE_DOMAIN}</a>
             </p>
           </div>
           <div style="${footerStyles}">
@@ -254,7 +255,7 @@ const getEmailTemplate = (type: string, data: Record<string, string>) => {
             </div>
             
             <div style="text-align: center; margin-top: 32px;">
-              <a href="https://hause.ink/admin" style="${buttonStyles}">View in Dashboard</a>
+              <a href="https://${SITE_DOMAIN}/admin" style="${buttonStyles}">View in Dashboard</a>
             </div>
           </div>
           <div style="${footerStyles}">
