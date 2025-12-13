@@ -1,13 +1,13 @@
 import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
-import { Home } from 'lucide-react';
+import { Home, Eye, EyeOff } from 'lucide-react';
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -15,9 +15,19 @@ const Auth = () => {
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const { signIn, signUp, user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  // Password validation
+  const validatePassword = (pwd: string): string | null => {
+    if (pwd.length < 8) return 'Password must be at least 8 characters';
+    if (!/[A-Z]/.test(pwd)) return 'Password must contain an uppercase letter';
+    if (!/[a-z]/.test(pwd)) return 'Password must contain a lowercase letter';
+    if (!/[0-9]/.test(pwd)) return 'Password must contain a number';
+    return null;
+  };
 
   if (user) {
     navigate('/');
@@ -45,6 +55,18 @@ const Auth = () => {
           navigate('/');
         }
       } else {
+        // Validate password strength before signup
+        const passwordError = validatePassword(password);
+        if (passwordError) {
+          toast({
+            title: "Weak Password",
+            description: passwordError,
+            variant: "destructive"
+          });
+          setLoading(false);
+          return;
+        }
+
         const { error } = await signUp(email, password, fullName);
         if (error) {
           toast({
@@ -55,7 +77,7 @@ const Auth = () => {
         } else {
           toast({
             title: "Account Created!",
-            description: "Welcome to Rentals in Europe."
+            description: "Welcome to Hause."
           });
           navigate('/');
         }
@@ -87,7 +109,11 @@ const Auth = () => {
 
       <Card className="w-full max-w-md bg-card/95 backdrop-blur-sm shadow-card relative z-10">
         <CardHeader className="text-center">
-          <CardTitle className="text-3xl font-bold text-primary">Rentals in Europe</CardTitle>
+          <Link to="/" className="inline-block">
+            <CardTitle className="text-3xl font-bold text-primary hover:text-primary/80 transition-colors">
+              Hause
+            </CardTitle>
+          </Link>
           <CardDescription>Sign in to manage your properties</CardDescription>
         </CardHeader>
         <CardContent>
@@ -112,14 +138,25 @@ const Auth = () => {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="password">Password</Label>
-                  <Input
-                    id="password"
-                    type="password"
-                    placeholder="••••••••"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                  />
+                  <div className="relative">
+                    <Input
+                      id="password"
+                      type={showPassword ? 'text' : 'password'}
+                      placeholder="••••••••"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                      className="pr-10"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                      tabIndex={-1}
+                    >
+                      {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
+                  </div>
                 </div>
                 <Button type="submit" className="w-full" disabled={loading}>
                   {loading ? 'Logging in...' : 'Login'}
@@ -153,15 +190,29 @@ const Auth = () => {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="signupPassword">Password</Label>
-                  <Input
-                    id="signupPassword"
-                    type="password"
-                    placeholder="••••••••"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    minLength={6}
-                  />
+                  <div className="relative">
+                    <Input
+                      id="signupPassword"
+                      type={showPassword ? 'text' : 'password'}
+                      placeholder="••••••••"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                      minLength={8}
+                      className="pr-10"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                      tabIndex={-1}
+                    >
+                      {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Min 8 chars, uppercase, lowercase, and number required
+                  </p>
                 </div>
                 <Button type="submit" className="w-full" disabled={loading}>
                   {loading ? 'Creating Account...' : 'Sign Up'}

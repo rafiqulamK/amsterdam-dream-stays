@@ -1,3 +1,4 @@
+import { Suspense, lazy } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -7,16 +8,19 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { useFacebookPixel } from "@/hooks/useFacebookPixel";
 import { useGoogleAnalytics } from "@/hooks/useGoogleAnalytics";
+import ErrorBoundary from "@/components/ErrorBoundary";
+import RouteLoader from "@/components/RouteLoader";
 import WhatsAppButton from "@/components/WhatsAppButton";
 import CookieConsent from "@/components/CookieConsent";
-import Index from "./pages/Index";
-import PropertyDetail from "./pages/PropertyDetail";
-import CMSPage from "./pages/CMSPage";
-import BlogPage from "./pages/BlogPage";
-import Auth from "./pages/Auth";
-import AdminDashboard from "./pages/AdminDashboard";
-// TenantDashboard hidden from navigation
-import NotFound from "./pages/NotFound";
+
+// Lazy load pages for better performance
+const Index = lazy(() => import("./pages/Index"));
+const PropertyDetail = lazy(() => import("./pages/PropertyDetail"));
+const CMSPage = lazy(() => import("./pages/CMSPage"));
+const BlogPage = lazy(() => import("./pages/BlogPage"));
+const Auth = lazy(() => import("./pages/Auth"));
+const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
+const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient();
 
@@ -28,32 +32,36 @@ const TrackingInitializer = () => {
 };
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <ThemeProvider>
-          <AuthProvider>
-            <TrackingInitializer />
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/auth" element={<Auth />} />
-              <Route path="/admin" element={<AdminDashboard />} />
-              <Route path="/blog" element={<BlogPage />} />
-              {/* Tenant route hidden */}
-              <Route path="/property/:id" element={<PropertyDetail />} />
-              <Route path="/page/:slug" element={<CMSPage />} />
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-            <WhatsAppButton />
-            <CookieConsent />
-          </AuthProvider>
-        </ThemeProvider>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
+  <ErrorBoundary>
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <ThemeProvider>
+            <AuthProvider>
+              <TrackingInitializer />
+              <Suspense fallback={<RouteLoader />}>
+                <Routes>
+                  <Route path="/" element={<Index />} />
+                  <Route path="/auth" element={<Auth />} />
+                  <Route path="/admin" element={<AdminDashboard />} />
+                  <Route path="/blog" element={<BlogPage />} />
+                  {/* Tenant route hidden */}
+                  <Route path="/property/:id" element={<PropertyDetail />} />
+                  <Route path="/page/:slug" element={<CMSPage />} />
+                  {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </Suspense>
+              <WhatsAppButton />
+              <CookieConsent />
+            </AuthProvider>
+          </ThemeProvider>
+        </BrowserRouter>
+      </TooltipProvider>
+    </QueryClientProvider>
+  </ErrorBoundary>
 );
 
 export default App;

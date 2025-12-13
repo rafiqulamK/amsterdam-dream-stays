@@ -3,6 +3,7 @@ import { cn } from '@/lib/utils';
 import { Compass, Sparkles, Map, Footprints } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useHaptics } from '@/hooks/useHaptics';
+import { zIndex } from '@/styles/z-index';
 import GuidedTour from './GuidedTour';
 
 const TourLauncher = () => {
@@ -26,8 +27,11 @@ const TourLauncher = () => {
 
   return (
     <>
-      {/* Floating launcher button */}
-      <div className="fixed bottom-24 right-6 z-30">
+      {/* Floating launcher button - positioned above FloatingCTA on mobile */}
+      <div 
+        className="fixed bottom-24 right-6 md:bottom-24"
+        style={{ zIndex: zIndex.tourLauncher }}
+      >
         <Button
           onClick={handleLaunch}
           onMouseEnter={() => {
@@ -116,7 +120,7 @@ const TourLauncher = () => {
       {showPulse && !isTourOpen && (
         <div 
           className={cn(
-            'fixed bottom-40 right-6 z-30',
+            'fixed bottom-40 right-6 md:bottom-40',
             'px-3 py-2 rounded-lg bg-popover border border-border shadow-lg',
             'text-sm text-muted-foreground',
             'animate-bounce-subtle',

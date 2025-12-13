@@ -1,8 +1,8 @@
-# Technical Deployment Guide for Haus.online
+# Technical Deployment Guide for Hause.link
 
-This document provides detailed technical information for deploying the Haus.online property rental platform to cPanel shared hosting.
+This document provides detailed technical information for deploying the Hause property rental platform to cPanel shared hosting.
 
----
+**Production Domain:** https://hause.link
 
 ## Table of Contents
 
@@ -265,7 +265,7 @@ Most cPanel installations include AutoSSL:
 1. Go to cPanel → SSL/TLS Status
 2. Click "Run AutoSSL"
 3. Wait 5-10 minutes
-4. Verify at `https://haus.online`
+4. Verify at `https://hause.link`
 
 ### Manual SSL Installation
 
@@ -282,10 +282,10 @@ If using a custom certificate:
 
 ```bash
 # Check certificate
-curl -vI https://haus.online 2>&1 | grep -A5 "Server certificate"
+curl -vI https://hause.link 2>&1 | grep -A5 "Server certificate"
 
 # Test HTTPS redirect
-curl -I http://haus.online
+curl -I http://hause.link
 # Should return 301 redirect to https://
 ```
 
@@ -305,12 +305,12 @@ curl -I http://haus.online
 The sitemap is dynamically generated and returns fresh data:
 
 ```
-https://haus.online/sitemap.xml
+https://hause.link/sitemap.xml
 → Proxied to edge function
 → Returns XML with all properties and pages
 ```
 
-**Note:** The sitemap URL in `robots.txt` points to `https://haus.online/sitemap.xml`, which the edge function handles via the configured route.
+**Note:** The sitemap URL in `robots.txt` points to `https://hause.link/sitemap.xml`, which the edge function handles via the configured route.
 
 ### Email Function Security
 
@@ -390,13 +390,13 @@ console.log('DB Connection:', error ? 'Failed' : 'OK');
 
 ```bash
 # Test if site is accessible
-curl -I https://haus.online
+curl -I https://hause.link
 
 # Check DNS propagation
-dig haus.online
+dig hause.link
 
 # Test SSL certificate
-openssl s_client -connect haus.online:443 -servername haus.online
+openssl s_client -connect hause.link:443 -servername hause.link
 ```
 
 ---
@@ -461,10 +461,10 @@ npm run build
 
 | URL | Purpose |
 |-----|---------|
-| `https://haus.online` | Main website |
-| `https://haus.online/admin` | Admin dashboard |
-| `https://haus.online/auth` | Login page |
-| `https://haus.online/sitemap.xml` | Sitemap |
+| `https://hause.link` | Main website |
+| `https://hause.link/admin` | Admin dashboard |
+| `https://hause.link/auth` | Login page |
+| `https://hause.link/sitemap.xml` | Sitemap |
 
 ### Contact
 
