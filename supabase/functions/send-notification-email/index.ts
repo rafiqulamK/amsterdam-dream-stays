@@ -5,9 +5,15 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Admin email addresses for notifications (used after domain verification)
+const ADMIN_EMAILS = {
+  info: "info@hause.ink",
+  support: "support@hause.ink"
+};
+
 interface EmailRequest {
   type: 'lead' | 'booking' | 'test' | 'user_confirmation';
-  to: string;
+  to?: string;
   data: Record<string, string>;
 }
 
@@ -201,7 +207,7 @@ const getEmailTemplate = (type: string, data: Record<string, string>) => {
             
             <p style="color: #64748b; font-size: 14px; margin-top: 24px;">
               If you have any questions, feel free to reply to this email or contact us at 
-              <a href="mailto:info@${SITE_DOMAIN}" style="color: #1a1a2e;">info@${SITE_DOMAIN}</a>
+              <a href="mailto:${ADMIN_EMAILS.info}" style="color: #1a1a2e;">${ADMIN_EMAILS.info}</a>
             </p>
           </div>
           <div style="${footerStyles}">
@@ -277,22 +283,12 @@ const handler = async (req: Request): Promise<Response> => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  // Verify authentication - require either webhook secret or JWT
-  const webhookSecret = Deno.env.get("EMAIL_WEBHOOK_SECRET");
-  const providedSecret = req.headers.get("x-webhook-secret");
+  // Require JWT authentication for security
   const authHeader = req.headers.get("authorization");
-  const hasValidJWT = authHeader?.startsWith("Bearer ") && authHeader.length > 10;
-  
-  // Check authentication
-  const hasValidWebhookSecret = webhookSecret && providedSecret === webhookSecret;
-  
-  if (!hasValidWebhookSecret && !hasValidJWT) {
-    console.error("Authentication failed - no valid webhook secret or JWT provided");
-    if (!webhookSecret) {
-      console.warn("EMAIL_WEBHOOK_SECRET not configured - add it in Supabase secrets");
-    }
+  if (!authHeader?.startsWith("Bearer ")) {
+    console.error("Authentication failed - no JWT provided");
     return new Response(
-      JSON.stringify({ error: "Unauthorized - authentication required" }),
+      JSON.stringify({ error: "Unauthorized - JWT required" }),
       { status: 401, headers: { "Content-Type": "application/json", ...corsHeaders } }
     );
   }
@@ -305,9 +301,20 @@ const handler = async (req: Request): Promise<Response> => {
 
     const { type, to, data }: EmailRequest = await req.json();
     
-    console.log(`Sending ${type} email to ${to}`);
+    // Determine recipient - use provided 'to' or default to admin emails
+    let recipient = to;
+    if (!recipient) {
+      // For admin notifications (leads, bookings), send to info@hause.ink
+      recipient = ADMIN_EMAILS.info;
+    }
+    
+    console.log(`Sending ${type} email to ${recipient}`);
 
     const template = getEmailTemplate(type, data);
+
+    // Use hause.ink domain for sending after domain verification
+    // Until domain is verified with Resend, use onboarding@resend.dev
+    const fromEmail = "Hause <onboarding@resend.dev>"; // Change to "Hause <info@hause.ink>" after domain verification
 
     const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
@@ -316,8 +323,9 @@ const handler = async (req: Request): Promise<Response> => {
         Authorization: `Bearer ${RESEND_API_KEY}`,
       },
       body: JSON.stringify({
-        from: "Hause <onboarding@resend.dev>",
-        to: [to],
+        from: fromEmail,
+        to: [recipient],
+        reply_to: ADMIN_EMAILS.support,
         subject: template.subject,
         html: template.html,
       }),
