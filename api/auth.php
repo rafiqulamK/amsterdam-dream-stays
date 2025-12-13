@@ -1,7 +1,7 @@
 <?php
 require_once 'config.php';
 
-session_start();
+// Session is already started in config.php with secure settings
 
 $method = $_SERVER['REQUEST_METHOD'];
 $action = $_GET['action'] ?? '';
