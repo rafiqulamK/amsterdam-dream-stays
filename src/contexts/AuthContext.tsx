@@ -30,7 +30,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       const data = await response.json();
 
       if (data.user) {
-        setUser(data.user as User);
+        setUser(data.user);
         setSession({ user: data.user });
         setUserRole(data.user.role);
       } else {
@@ -84,7 +84,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       const data = await response.json();
 
       if (data.success) {
-        setUser(data.user as User);
+        setUser(data.user);
         setSession({ user: data.user });
         setUserRole(data.user.role);
         return { error: null };

@@ -31,7 +31,7 @@ const AdminDashboard = () => {
     if (!loading) {
       if (!user) {
         navigate('/auth');
-      } else if (userRole !== 'admin' && userRole !== 'superadmin') {
+      } else if (userRole !== 'admin') {
         toast({
           title: "Access Denied",
           description: "You don't have admin permissions",
@@ -64,7 +64,7 @@ const AdminDashboard = () => {
     return <PageLoader />;
   }
 
-  if (!user || (userRole !== 'admin' && userRole !== 'superadmin')) {
+  if (!user || userRole !== 'admin') {
     return null;
   }
 
