@@ -25,11 +25,11 @@ export const useProperties = (cityFilter?: string) => {
     queryKey: ["properties", cityFilter],
     queryFn: async () => {
       try {
-        const response = await apiClient.getProperties({ status: 'approved' });
-        const data = response;
+        const response = await apiClient.getProperties({ status: 'approved' }) as { properties?: any[] };
+        const properties = response?.properties || [];
 
         // Transform API data to match Property interface
-        const apiProperties: Property[] = data.properties.map((p: any) => ({
+        const apiProperties: Property[] = properties.map((p: any) => ({
           id: p.id.toString(),
           title: p.title,
           location: p.location,
