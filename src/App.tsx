@@ -10,6 +10,7 @@ import { useFacebookPixel } from "@/hooks/useFacebookPixel";
 import { useGoogleAnalytics } from "@/hooks/useGoogleAnalytics";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import RouteLoader from "@/components/RouteLoader";
+import SkipToContent from "@/components/SkipToContent";
 import WhatsAppButton from "@/components/WhatsAppButton";
 import CookieConsent from "@/components/CookieConsent";
 
@@ -40,6 +41,7 @@ const App = () => (
         <BrowserRouter>
           <ThemeProvider>
             <AuthProvider>
+              <SkipToContent />
               <TrackingInitializer />
               <Suspense fallback={<RouteLoader />}>
                 <Routes>
