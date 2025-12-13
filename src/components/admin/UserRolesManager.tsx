@@ -26,7 +26,7 @@ interface UserProfile {
   email: string;
   full_name: string | null;
   created_at: string;
-  role: 'admin' | 'tenant' | 'user';
+  role: 'admin' | 'tenant' | 'user' | 'superadmin';
 }
 
 const UserRolesManager = () => {
@@ -78,7 +78,7 @@ const UserRolesManager = () => {
       const userRole = roles?.find(r => r.user_id === profile.id);
       return {
         ...profile,
-        role: (userRole?.role || 'user') as 'admin' | 'tenant' | 'user'
+        role: (userRole?.role || 'user') as 'admin' | 'tenant' | 'user' | 'superadmin'
       };
     }) || [];
 
@@ -86,7 +86,7 @@ const UserRolesManager = () => {
     setLoading(false);
   };
 
-  const updateRole = async (userId: string, newRole: 'admin' | 'tenant' | 'user') => {
+  const updateRole = async (userId: string, newRole: 'admin' | 'tenant' | 'user' | 'superadmin') => {
     setUpdating(userId);
 
     // Check if user already has a role entry
@@ -136,6 +136,7 @@ const UserRolesManager = () => {
   const getRoleBadgeVariant = (role: string) => {
     switch (role) {
       case 'admin':
+      case 'superadmin':
         return 'destructive';
       case 'tenant':
         return 'default';
@@ -193,7 +194,7 @@ const UserRolesManager = () => {
                   <TableCell className="text-right">
                     <Select
                       value={user.role}
-                      onValueChange={(value) => updateRole(user.id, value as 'admin' | 'tenant' | 'user')}
+                      onValueChange={(value) => updateRole(user.id, value as 'admin' | 'tenant' | 'user' | 'superadmin')}
                       disabled={updating === user.id}
                     >
                       <SelectTrigger className="w-32">
@@ -203,6 +204,7 @@ const UserRolesManager = () => {
                         <SelectItem value="user">User</SelectItem>
                         <SelectItem value="tenant">Tenant</SelectItem>
                         <SelectItem value="admin">Admin</SelectItem>
+                        <SelectItem value="superadmin">Superadmin</SelectItem>
                       </SelectContent>
                     </Select>
                   </TableCell>

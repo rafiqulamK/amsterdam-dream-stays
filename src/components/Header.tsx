@@ -71,7 +71,7 @@ const Header = () => {
             
             {user ? (
               <div className="flex items-center gap-2">
-                {userRole === 'admin' && (
+                {(userRole === 'admin' || userRole === 'superadmin') && (
                   <Link to="/admin">
                     <Button variant="ghost" size="sm">Admin</Button>
                   </Link>
@@ -133,7 +133,7 @@ const Header = () => {
               
               {user ? (
                 <>
-                  {userRole === 'admin' && (
+                  {(userRole === 'admin' || userRole === 'superadmin') && (
                     <Link to="/admin" onClick={() => setIsMenuOpen(false)}>
                       <Button variant="ghost" className="w-full justify-start">Admin Dashboard</Button>
                     </Link>
