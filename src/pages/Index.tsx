@@ -3,6 +3,7 @@ import Header from "@/components/Header";
 import Hero from "@/components/Hero";
 import Footer from "@/components/Footer";
 import PropertyCard from "@/components/PropertyCard";
+import PropertyFilters, { PropertyFiltersState } from "@/components/PropertyFilters";
 import BlogSection from "@/components/BlogSection";
 import WelcomeDoor from "@/components/WelcomeDoor";
 import SectionReveal from "@/components/SectionReveal";
@@ -14,6 +15,7 @@ import FloatingCTA from "@/components/FloatingCTA";
 import ExitIntentPopup from "@/components/ExitIntentPopup";
 import HomepageLeadForm from "@/components/HomepageLeadForm";
 import { useProperties } from "@/hooks/useProperties";
+import { useFilteredProperties } from "@/hooks/useFilteredProperties";
 import { useContactSettings } from "@/hooks/useContactSettings";
 import { useFacebookPixel } from "@/hooks/useFacebookPixel";
 import { Search, Shield, Zap, MapPin, Phone, Mail, Home, BookOpen, Headphones, Sparkles, Send } from "lucide-react";
@@ -41,7 +43,17 @@ const features = [
 const Index = () => {
   const [showWelcome, setShowWelcome] = useState(true);
   const [showContactForm, setShowContactForm] = useState(false);
-  const { data: properties, isLoading } = useProperties("Amsterdam");
+  const [filters, setFilters] = useState<PropertyFiltersState>({
+    search: '',
+    city: '',
+    minPrice: 0,
+    maxPrice: 5000,
+    bedrooms: '',
+    propertyType: '',
+  });
+  
+  const { data: properties, isLoading } = useProperties();
+  const { filteredProperties, cities } = useFilteredProperties(properties, filters);
   const { settings: contact } = useContactSettings();
   const { trackEvent } = useFacebookPixel();
 
@@ -98,9 +110,18 @@ const Index = () => {
             <SectionReveal delay={100}>
               <GreetingText
                 title="Step into your new home"
-                subtitle="Verified rentals available now in Amsterdam"
+                subtitle="Verified rentals available now in the Netherlands"
                 align="left"
-                className="mb-10"
+                className="mb-6"
+              />
+            </SectionReveal>
+
+            <SectionReveal delay={150}>
+              <PropertyFilters 
+                filters={filters}
+                onFiltersChange={setFilters}
+                cities={cities}
+                className="mb-8"
               />
             </SectionReveal>
             
@@ -114,20 +135,38 @@ const Index = () => {
                   </div>
                 ))}
               </div>
-            ) : (
+            ) : filteredProperties.length > 0 ? (
               <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-                {properties?.map((property, idx) => (
+                {filteredProperties.map((property, idx) => (
                   <SectionReveal key={property.id} delay={idx * 100} direction="up">
                     <PropertyCard property={property} />
                   </SectionReveal>
                 ))}
               </div>
-            )}
-
-            {!isLoading && (!properties || properties.length === 0) && (
+            ) : (
               <SectionReveal>
                 <div className="text-center py-12 glass rounded-2xl">
-                  <p className="text-muted-foreground">No properties available at the moment. Check back soon!</p>
+                  <p className="text-muted-foreground">
+                    {filters.search || filters.city || filters.bedrooms || filters.propertyType
+                      ? "No properties match your filters. Try adjusting your search criteria."
+                      : "No properties available at the moment. Check back soon!"}
+                  </p>
+                  {(filters.search || filters.city || filters.bedrooms || filters.propertyType) && (
+                    <Button 
+                      variant="outline" 
+                      className="mt-4"
+                      onClick={() => setFilters({
+                        search: '',
+                        city: '',
+                        minPrice: 0,
+                        maxPrice: 5000,
+                        bedrooms: '',
+                        propertyType: '',
+                      })}
+                    >
+                      Clear Filters
+                    </Button>
+                  )}
                 </div>
               </SectionReveal>
             )}
