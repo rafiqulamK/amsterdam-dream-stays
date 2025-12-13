@@ -1,6 +1,6 @@
-# Haus.online - Property Rental Platform
+# Amsterdam Dream Stays - Property Rental Platform
 
-A modern property rental platform for Amsterdam, built with React, TypeScript, and Tailwind CSS.
+A modern property rental platform for Amsterdam, built with React, TypeScript, PHP backend, and MySQL database.
 
 ## 🌟 Features
 
@@ -34,7 +34,36 @@ A modern property rental platform for Amsterdam, built with React, TypeScript, a
 
 ---
 
-## 🚀 Deployment Guide: GitHub to cPanel
+## �️ Database Setup
+
+This project uses MySQL database instead of Supabase. Before deployment:
+
+### 1. Create MySQL Database
+- Login to cPanel → MySQL Databases
+- Create database: `amsterdam_dream_stays`
+- Create user with full privileges
+
+### 2. Import Schema
+- Go to phpMyAdmin
+- Import `database/schema.sql`
+
+### 3. Configure Environment
+Update `api/config.php` with your database credentials:
+```php
+define('DB_HOST', 'localhost');
+define('DB_NAME', 'amsterdam_dream_stays');
+define('DB_USER', 'your_db_user');
+define('DB_PASS', 'your_db_password');
+```
+
+### 4. Default Admin Account
+- Email: admin@amsterdamdreamstays.com
+- Password: admin123
+- **Change password after first login!**
+
+---
+
+## �🚀 Deployment Guide: GitHub to cPanel
 
 ### Prerequisites
 

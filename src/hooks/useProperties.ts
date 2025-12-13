@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { apiClient } from "@/lib/api";
 import { properties as staticProperties } from "@/data/properties";
 
 export interface Property {
@@ -24,54 +24,37 @@ export const useProperties = (cityFilter?: string) => {
   return useQuery({
     queryKey: ["properties", cityFilter],
     queryFn: async () => {
-      // Fetch approved properties from Supabase
-      let query = supabase
-        .from("properties")
-        .select("*")
-        .eq("status", "approved");
+      try {
+        const response = await apiClient.getProperties({ status: 'approved' });
+        const data = response;
 
-      // Filter by city if specified (Amsterdam only for homepage)
-      if (cityFilter) {
-        query = query.ilike("city", cityFilter);
-      }
+        // Transform API data to match Property interface
+        const apiProperties: Property[] = data.properties.map((p: any) => ({
+          id: p.id.toString(),
+          title: p.title,
+          location: p.location,
+          city: p.city,
+          price: Number(p.price),
+          bedrooms: p.bedrooms,
+          bathrooms: p.bathrooms,
+          area: Number(p.area),
+          image: p.images?.[0] || "/placeholder.svg",
+          images: Array.isArray(p.images) ? p.images : [],
+          description: p.description,
+          amenities: Array.isArray(p.amenities) ? p.amenities : [],
+          availableFrom: p.available_from,
+          propertyType: p.property_type,
+          status: p.status,
+        }));
 
-      const { data, error } = await query.order("created_at", { ascending: false });
-
-      if (error) {
+        return apiProperties;
+      } catch (error) {
         console.error("Error fetching properties:", error);
         // Fallback to static properties filtered by city
-        return cityFilter 
+        return cityFilter
           ? staticProperties.filter(p => p.city.toLowerCase() === cityFilter.toLowerCase())
           : staticProperties;
       }
-
-      // Transform Supabase data to match Property interface
-      const supabaseProperties: Property[] = (data || []).map((p) => ({
-        id: p.id,
-        title: p.title,
-        location: p.location,
-        city: p.city,
-        price: Number(p.price),
-        bedrooms: p.bedrooms,
-        bathrooms: p.bathrooms,
-        area: Number(p.area),
-        image: p.images?.[0] || "/placeholder.svg",
-        images: p.images || [],
-        description: p.description,
-        amenities: p.amenities || [],
-        availableFrom: p.available_from,
-        propertyType: p.property_type,
-        status: p.status,
-      }));
-
-      // If no Supabase data, use filtered static properties
-      if (supabaseProperties.length === 0) {
-        return cityFilter 
-          ? staticProperties.filter(p => p.city.toLowerCase() === cityFilter.toLowerCase())
-          : staticProperties;
-      }
-
-      return supabaseProperties;
     },
   });
 };

@@ -1,21 +1,57 @@
-# Technical Deployment Guide for Hause.link
+# Technical Deployment Guide for Amsterdam Dream Stays
 
-This document provides detailed technical information for deploying the Hause property rental platform to cPanel shared hosting.
+This document provides detailed technical information for deploying the Amsterdam Dream Stays property rental platform to cPanel shared hosting with MySQL backend.
 
-**Production Domain:** https://hause.link
+**Production Domain:** https://your-domain.com
 
 ## Table of Contents
 
-1. [Build Process](#build-process)
-2. [Environment Variables](#environment-variables)
-3. [Backend Connection](#backend-connection)
-4. [File Upload Details](#file-upload-details)
-5. [Apache Configuration](#apache-configuration)
-6. [SSL Configuration](#ssl-configuration)
-7. [Edge Functions](#edge-functions)
-8. [Troubleshooting](#troubleshooting)
-9. [Performance Optimization](#performance-optimization)
-10. [Security Considerations](#security-considerations)
+1. [Database Setup](#database-setup)
+2. [Build Process](#build-process)
+3. [Environment Variables](#environment-variables)
+4. [Backend Connection](#backend-connection)
+5. [File Upload Details](#file-upload-details)
+6. [Apache Configuration](#apache-configuration)
+7. [SSL Configuration](#ssl-configuration)
+8. [PHP Configuration](#php-configuration)
+9. [Troubleshooting](#troubleshooting)
+10. [Performance Optimization](#performance-optimization)
+11. [Security Considerations](#security-considerations)
+
+---
+
+## Database Setup
+
+### MySQL Database Creation
+
+1. **Login to cPanel** → MySQL Databases
+2. **Create Database**: `amsterdam_dream_stays`
+3. **Create User**: Choose a strong username and password
+4. **Add User to Database**: Grant ALL privileges
+
+### Import Database Schema
+
+1. **Open phpMyAdmin** from cPanel
+2. **Select your database**
+3. **Import** → Choose `database/schema.sql`
+4. **Click Go** to execute the SQL
+
+### Configure Database Connection
+
+Edit `api/config.php` with your database credentials:
+
+```php
+define('DB_HOST', 'localhost');
+define('DB_NAME', 'amsterdam_dream_stays');
+define('DB_USER', 'your_db_user');
+define('DB_PASS', 'your_db_password');
+```
+
+### Default Admin Account
+
+- **Email**: admin@amsterdamdreamstays.com
+- **Password**: admin123
+- ⚠️ **Change this password immediately after first login!**
 
 ---
 
@@ -65,24 +101,28 @@ dist/
 
 ## Environment Variables
 
-### How They Work
+### Database Configuration
 
-Environment variables are **embedded at build time**. The `.env` file contains:
+Database credentials are configured in `api/config.php`:
 
-```env
-VITE_SUPABASE_URL=https://[project-id].supabase.co
-VITE_SUPABASE_PUBLISHABLE_KEY=[anon-key]
-VITE_SUPABASE_PROJECT_ID=[project-id]
+```php
+define('DB_HOST', 'localhost');
+define('DB_NAME', 'amsterdam_dream_stays');
+define('DB_USER', 'your_db_user');
+define('DB_PASS', 'your_db_password');
 ```
 
-**Important:** These values are baked into the JavaScript bundle during `npm run build`. You do NOT need to configure environment variables on cPanel.
+**Important:** Update these values with your actual cPanel MySQL database credentials.
 
-### Accessing in Code
+### File Permissions
 
-```typescript
-// These are available in the built application
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+Ensure these directories are writable by the web server:
+
+```bash
+chmod 755 api/
+chmod 755 uploads/
+chmod 755 uploads/images/
+chmod 755 uploads/videos/
 ```
 
 ---
@@ -93,49 +133,49 @@ const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
 ```
 ┌─────────────────┐         ┌──────────────────────┐
-│   cPanel Host   │         │   Lovable Cloud      │
-│   (Frontend)    │ ←────── │   (Backend)          │
-│                 │  HTTPS  │                      │
-│  - HTML/CSS/JS  │         │  - Database          │
-│  - Static files │         │  - Authentication    │
-│                 │         │  - Edge Functions    │
-│                 │         │  - File Storage      │
+│   cPanel Host   │         │   cPanel MySQL       │
+│   (Full Stack)  │ ←────── │   (Database)         │
+│                 │   PHP   │                      │
+│  - HTML/CSS/JS  │         │  - All Data          │
+│  - PHP API      │         │  - User Accounts     │
+│  - File Storage │         │  - Properties        │
+│  - Admin Panel  │         │  - Bookings/Leads    │
 └─────────────────┘         └──────────────────────┘
 ```
 
-### What Stays on Lovable Cloud
+### What's on cPanel
 
-- PostgreSQL database (all data)
-- User authentication
-- File storage (images uploaded via admin)
+- **Frontend**: React application (HTML/CSS/JS)
+- **Backend**: PHP API endpoints
+- **Database**: MySQL database
+- **File Storage**: Local file system for uploads
+- **Authentication**: PHP session-based auth
 - Edge functions (email, sitemap)
 - Realtime subscriptions
 
-### What Goes to cPanel
+### What's Deployed to cPanel
 
-- React application (HTML/JS/CSS)
-- Static images from `src/assets/`
-- Configuration files (.htaccess, robots.txt)
+- **Frontend**: React application (HTML/JS/CSS)
+- **Backend**: PHP API files
+- **Database**: MySQL schema and data
+- **File Storage**: Upload directories
+- **Configuration**: .htaccess, database config
 
-### Connection Resilience
+### API Resilience
 
-All data hooks include error handling with fallback defaults:
+All API calls include error handling with fallback defaults:
 
 ```typescript
-const fetchSettings = useCallback(async () => {
+const fetchProperties = async () => {
   try {
-    const { data, error } = await supabase
-      .from('site_settings')
-      .select('setting_value')
-      .eq('setting_key', 'hero_section')
-      .maybeSingle();
-
-    if (error) {
-      console.warn('Using defaults:', error.message);
-      return;
-    }
-    // Use data...
-  } catch (err) {
+    const response = await apiClient.getProperties({ status: 'approved' });
+    return response.properties || [];
+  } catch (error) {
+    console.warn('API error, using static data:', error);
+    return staticProperties;
+  }
+};
+```
     console.warn('Fetch error, using defaults:', err);
   } finally {
     setLoading(false);
@@ -153,10 +193,12 @@ const fetchSettings = useCallback(async () => {
 |-------------|----------|---------|
 | `index.html` | ✅ Yes | Entry point |
 | `assets/` | ✅ Yes | JS, CSS, images |
-| `.htaccess` | ✅ Yes | SPA routing |
+| `api/` | ✅ Yes | PHP backend API |
+| `database/` | ✅ Yes | MySQL schema |
+| `uploads/` | ✅ Yes | File upload directories |
+| `.htaccess` | ✅ Yes | SPA routing & security |
 | `robots.txt` | ✅ Yes | SEO |
 | `favicon.png` | ✅ Yes | Browser icon |
-| `haus-logo.png` | ✅ Yes | Email templates |
 
 ### Upload Methods
 
@@ -291,37 +333,65 @@ curl -I http://hause.link
 
 ---
 
-## Edge Functions
+## PHP Configuration
 
-### Available Functions
+### PHP Version Requirements
 
-| Function | URL | Purpose | Auth Required |
-|----------|-----|---------|---------------|
-| sitemap | `/sitemap.xml` | Dynamic XML sitemap | No |
-| send-notification-email | (internal) | Lead & admin emails | Optional (webhook secret) |
+- **PHP 7.4+** required
+- **MySQLi** or **PDO** extension enabled
+- **File upload** support enabled
+- **Session support** enabled
 
-### Sitemap Function
+### PHP Settings Check
 
-The sitemap is dynamically generated and returns fresh data:
+Create a `phpinfo.php` file to verify PHP configuration:
 
+```php
+<?php
+phpinfo();
+?>
 ```
-https://hause.link/sitemap.xml
-→ Proxied to edge function
-→ Returns XML with all properties and pages
+
+Visit `https://your-domain.com/phpinfo.php` and check:
+- PHP version ≥ 7.4
+- `pdo_mysql` extension loaded
+- `file_uploads = On`
+- `upload_max_filesize ≥ 5M`
+- `post_max_size ≥ 8M`
+
+### Session Configuration
+
+Ensure sessions work properly by checking `phpinfo.php` for:
+- `session.save_path` is writable
+- `session.gc_maxlifetime` is reasonable (default 1440 seconds)
+
+### File Permissions
+
+Set correct permissions for PHP files and directories:
+
+```bash
+# API files should be executable
+chmod 644 api/*.php
+
+# Upload directories should be writable
+chmod 755 uploads/
+chmod 755 uploads/images/
+chmod 755 uploads/videos/
 ```
 
-**Note:** The sitemap URL in `robots.txt` points to `https://hause.link/sitemap.xml`, which the edge function handles via the configured route.
+### PHP Error Reporting
 
-### Email Function Security
+For debugging, add to `api/config.php`:
 
-The email notification function supports optional webhook secret authentication:
+```php
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+```
 
-1. **Generate a secret** in Admin Dashboard → Settings → Email Notifications → Security tab
-2. **Save the settings** to store the secret in the database
-3. **Add the secret** as `EMAIL_WEBHOOK_SECRET` in your backend secrets
-4. When configured, unauthorized email requests will be rejected
+**Remove these settings in production!**
 
-**Note:** If no secret is configured, the endpoint remains open (suitable for development, not recommended for production).
+---
 
 ---
 
