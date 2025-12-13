@@ -1,0 +1,45 @@
+Amsterdam Dream Stays - FINAL v2.0
+==================================
+
+Created: December 13, 2025
+Domain: https://hause.ink
+Status: READY FOR DEPLOYMENT
+
+This is the complete, production-ready package for cPanel deployment.
+
+DEFAULT ADMIN:
+==============
+- Email: sunjida@hause.ink
+- Password: Sunji@#$%
+- ⚠️ CHANGE PASSWORD IMMEDIATELY AFTER LOGIN
+
+CONTENTS:
+=========
+✅ Complete React frontend (built and optimized)
+✅ PHP/MySQL backend (all API endpoints)
+✅ Database schema (ready to import)
+✅ Upload directories (images/videos)
+✅ Apache configuration (.htaccess)
+✅ Deployment documentation
+✅ Security hardening
+✅ SEO optimization
+
+DEPLOYMENT: Upload to cPanel public_html and follow DEPLOYMENT_README.md
+
+TECHNICAL SPECS:
+================
+- Frontend: React 18 + TypeScript + Vite
+- Backend: PHP 7.4+ + MySQL
+- Hosting: cPanel Shared Hosting
+- SSL: Required (AutoSSL recommended)
+- Database: MySQL 5.7+
+
+CHANGES IN V2.0:
+================
+🔄 Complete Supabase to PHP/MySQL migration
+🔐 Enhanced security and authentication
+📁 File upload system with validation
+👨‍💼 Admin dashboard improvements
+📱 Responsive design optimizations
+🔍 SEO and performance enhancements
+⚡ Optimized build and assets
