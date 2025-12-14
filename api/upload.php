@@ -1,125 +1,109 @@
 <?php
 require_once 'config.php';
 
-$method = $_SERVER['REQUEST_METHOD'];
+header('Content-Type: application/json');
 
-if ($method !== 'POST') {
+// Only allow POST requests for file upload
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     sendJsonResponse(['error' => 'Method not allowed'], 405);
 }
 
-// Use the requireAuth helper from config.php
-requireAuth();
-
-$action = $_GET['action'] ?? '';
-
-switch ($action) {
-    case 'image':
-        uploadImage();
-        break;
-    case 'video':
-        uploadVideo();
-        break;
-    default:
-        sendJsonResponse(['error' => 'Invalid action'], 400);
+// Check if file was uploaded
+if (!isset($_FILES['file']) || $_FILES['file']['error'] !== UPLOAD_ERR_OK) {
+    $error = $_FILES['file']['error'] ?? 'No file uploaded';
+    sendJsonResponse(['error' => 'File upload failed: ' . $error], 400);
 }
 
-function uploadImage() {
-    $uploadDir = '../uploads/images/';
-    $allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
-    $allowedExtensions = ['jpg', 'jpeg', 'png', 'webp', 'gif'];
-    $maxSize = 5 * 1024 * 1024; // 5MB
+$file = $_FILES['file'];
+$folder = sanitizeInput($_POST['folder'] ?? 'uploads', 50);
 
-    uploadFile($uploadDir, $allowedTypes, $allowedExtensions, $maxSize, 'image');
+// Validate folder name
+$allowedFolders = ['uploads', 'media', 'properties', 'branding', 'avatars', 'images', 'videos'];
+if (!in_array($folder, $allowedFolders)) {
+    $folder = 'uploads';
 }
 
-function uploadVideo() {
-    $uploadDir = '../uploads/videos/';
-    $allowedTypes = ['video/mp4', 'video/webm', 'video/ogg'];
-    $allowedExtensions = ['mp4', 'webm', 'ogg'];
-    $maxSize = 50 * 1024 * 1024; // 50MB
+// Allowed file types
+$allowedTypes = [
+    'image/jpeg' => 'jpg',
+    'image/png' => 'png',
+    'image/gif' => 'gif',
+    'image/webp' => 'webp',
+    'video/mp4' => 'mp4',
+    'video/webm' => 'webm',
+    'application/pdf' => 'pdf'
+];
 
-    uploadFile($uploadDir, $allowedTypes, $allowedExtensions, $maxSize, 'video');
+// Validate file type using server-side detection
+$finfo = new finfo(FILEINFO_MIME_TYPE);
+$mimeType = $finfo->file($file['tmp_name']);
+
+if (!array_key_exists($mimeType, $allowedTypes)) {
+    sendJsonResponse(['error' => 'File type not allowed: ' . $mimeType], 400);
 }
 
-function uploadFile($uploadDir, $allowedTypes, $allowedExtensions, $maxSize, $type) {
-    // Create directory if it doesn't exist
-    if (!is_dir($uploadDir)) {
-        mkdir($uploadDir, 0755, true);
-    }
+// Max file size (10MB for images, 50MB for videos)
+$isVideo = strpos($mimeType, 'video/') === 0;
+$maxSize = $isVideo ? 50 * 1024 * 1024 : 10 * 1024 * 1024;
 
-    if (!isset($_FILES['file'])) {
-        sendJsonResponse(['error' => 'No file uploaded'], 400);
-    }
+if ($file['size'] > $maxSize) {
+    sendJsonResponse(['error' => 'File too large. Maximum size is ' . ($isVideo ? '50MB' : '10MB')], 400);
+}
 
-    $file = $_FILES['file'];
-
-    // Check for upload errors
-    if ($file['error'] !== UPLOAD_ERR_OK) {
-        sendJsonResponse(['error' => 'Upload failed'], 400);
-    }
-
-    // Check file size
-    if ($file['size'] > $maxSize) {
-        sendJsonResponse(['error' => 'File too large'], 400);
-    }
-
-    // Server-side MIME type detection (don't trust client)
-    $finfo = new finfo(FILEINFO_MIME_TYPE);
-    $actualMimeType = $finfo->file($file['tmp_name']);
-    
-    if (!in_array($actualMimeType, $allowedTypes)) {
-        sendJsonResponse(['error' => 'Invalid file type'], 400);
-    }
-
-    // Validate file extension
-    $extension = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
-    if (!in_array($extension, $allowedExtensions)) {
-        sendJsonResponse(['error' => 'Invalid file extension'], 400);
-    }
-
-    // For images, verify it's actually an image
-    if ($type === 'image') {
-        $imageInfo = @getimagesize($file['tmp_name']);
-        if ($imageInfo === false) {
-            sendJsonResponse(['error' => 'Invalid image file'], 400);
-        }
-    }
-
-    // Generate unique filename with sanitized extension
-    $filename = bin2hex(random_bytes(16)) . '_' . time() . '.' . $extension;
-    $filepath = $uploadDir . $filename;
-
-    // Move uploaded file
-    if (move_uploaded_file($file['tmp_name'], $filepath)) {
-        // Save to database
-        global $pdo;
-        try {
-            $stmt = $pdo->prepare("
-                INSERT INTO media_library (file_name, file_url, file_type, file_size, uploaded_by)
-                VALUES (?, ?, ?, ?, ?)
-            ");
-            $stmt->execute([
-                sanitizeInput($filename, 255),
-                '/uploads/' . ($type === 'image' ? 'images/' : 'videos/') . $filename,
-                $actualMimeType,
-                $file['size'],
-                $_SESSION['user_id']
-            ]);
-
-            $mediaId = $pdo->lastInsertId();
-
-            sendJsonResponse([
-                'success' => true,
-                'file_url' => '/uploads/' . ($type === 'image' ? 'images/' : 'videos/') . $filename,
-                'media_id' => $mediaId
-            ]);
-        } catch (Exception $e) {
-            // Delete file if database insert fails
-            unlink($filepath);
-            sendJsonResponse(['error' => 'Database error'], 500);
-        }
-    } else {
-        sendJsonResponse(['error' => 'Failed to save file'], 500);
+// For images, verify it's actually an image
+if (strpos($mimeType, 'image/') === 0) {
+    $imageInfo = @getimagesize($file['tmp_name']);
+    if ($imageInfo === false) {
+        sendJsonResponse(['error' => 'Invalid image file'], 400);
     }
 }
+
+// Create upload directory if it doesn't exist
+$uploadDir = dirname(__DIR__) . '/uploads/' . $folder . '/';
+if (!is_dir($uploadDir)) {
+    mkdir($uploadDir, 0755, true);
+}
+
+// Generate unique filename
+$extension = $allowedTypes[$mimeType];
+$filename = time() . '-' . bin2hex(random_bytes(8)) . '.' . $extension;
+$filepath = $uploadDir . $filename;
+
+// Move uploaded file
+if (!move_uploaded_file($file['tmp_name'], $filepath)) {
+    sendJsonResponse(['error' => 'Failed to save file'], 500);
+}
+
+// Generate public URL
+$publicUrl = '/uploads/' . $folder . '/' . $filename;
+
+// Save to media library if it's an image and user is authenticated
+if (strpos($mimeType, 'image/') === 0 && isAuthenticated()) {
+    try {
+        $stmt = $pdo->prepare("
+            INSERT INTO media_library (file_name, file_url, file_type, file_size, uploaded_by)
+            VALUES (?, ?, ?, ?, ?)
+        ");
+        $stmt->execute([
+            $file['name'],
+            $publicUrl,
+            $mimeType,
+            $file['size'],
+            getCurrentUserId()
+        ]);
+    } catch (PDOException $e) {
+        // Log error but don't fail the upload
+        error_log('Failed to save to media library: ' . $e->getMessage());
+    }
+}
+
+// Return success response
+echo json_encode([
+    'success' => true,
+    'file_url' => $publicUrl,
+    'url' => $publicUrl,
+    'file_name' => $file['name'],
+    'file_type' => $mimeType,
+    'file_size' => $file['size']
+]);
 ?>

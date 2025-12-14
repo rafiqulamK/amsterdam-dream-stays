@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { apiClient } from '@/lib/api';
 
 export interface SocialLinks {
   facebook: string;
@@ -25,22 +25,17 @@ export const useSocialLinks = () => {
 
   const fetchLinks = useCallback(async () => {
     try {
-      const { data, error } = await supabase
-        .from('site_settings')
-        .select('setting_value')
-        .eq('setting_key', 'social_links')
-        .maybeSingle();
-
-      if (error) {
-        console.warn('Failed to fetch social links, using defaults:', error.message);
-        setLoading(false);
-        return;
-      }
+      const data = await apiClient.getSettings('social_links') as any;
 
       if (data?.setting_value) {
-        const value = data.setting_value as unknown as { value: SocialLinks };
+        const value = typeof data.setting_value === 'string' 
+          ? JSON.parse(data.setting_value) 
+          : data.setting_value;
+        
         if (value?.value) {
           setLinks({ ...defaultSocialLinks, ...value.value });
+        } else if (value) {
+          setLinks({ ...defaultSocialLinks, ...value });
         }
       }
     } catch (err) {
@@ -52,35 +47,6 @@ export const useSocialLinks = () => {
 
   useEffect(() => {
     fetchLinks();
-
-    // Subscribe to realtime changes for instant updates
-    let channel: ReturnType<typeof supabase.channel> | null = null;
-    
-    try {
-      channel = supabase
-        .channel('social-links-changes')
-        .on(
-          'postgres_changes',
-          {
-            event: '*',
-            schema: 'public',
-            table: 'site_settings',
-            filter: 'setting_key=eq.social_links'
-          },
-          () => {
-            fetchLinks();
-          }
-        )
-        .subscribe();
-    } catch (err) {
-      console.warn('Failed to subscribe to social links changes:', err);
-    }
-
-    return () => {
-      if (channel) {
-        supabase.removeChannel(channel);
-      }
-    };
   }, [fetchLinks]);
 
   return { links, loading };

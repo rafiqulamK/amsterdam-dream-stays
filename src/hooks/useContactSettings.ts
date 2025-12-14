@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { apiClient } from '@/lib/api';
 
 export interface ContactSettings {
   company_name: string;
@@ -31,22 +31,17 @@ export const useContactSettings = () => {
 
   const fetchSettings = useCallback(async () => {
     try {
-      const { data, error } = await supabase
-        .from('site_settings')
-        .select('setting_value')
-        .eq('setting_key', 'contact_info')
-        .maybeSingle();
-
-      if (error) {
-        console.warn('Failed to fetch contact settings, using defaults:', error.message);
-        setLoading(false);
-        return;
-      }
+      const data = await apiClient.getSettings('contact_info') as any;
 
       if (data?.setting_value) {
-        const value = data.setting_value as unknown as { value: ContactSettings };
+        const value = typeof data.setting_value === 'string' 
+          ? JSON.parse(data.setting_value) 
+          : data.setting_value;
+        
         if (value?.value) {
           setSettings({ ...defaultContactSettings, ...value.value });
+        } else if (value) {
+          setSettings({ ...defaultContactSettings, ...value });
         }
       }
     } catch (err) {
@@ -58,35 +53,6 @@ export const useContactSettings = () => {
 
   useEffect(() => {
     fetchSettings();
-
-    // Subscribe to realtime changes for instant updates
-    let channel: ReturnType<typeof supabase.channel> | null = null;
-    
-    try {
-      channel = supabase
-        .channel('contact-settings-changes')
-        .on(
-          'postgres_changes',
-          {
-            event: '*',
-            schema: 'public',
-            table: 'site_settings',
-            filter: 'setting_key=eq.contact_info'
-          },
-          () => {
-            fetchSettings();
-          }
-        )
-        .subscribe();
-    } catch (err) {
-      console.warn('Failed to subscribe to contact settings changes:', err);
-    }
-
-    return () => {
-      if (channel) {
-        supabase.removeChannel(channel);
-      }
-    };
   }, [fetchSettings]);
 
   return { settings, loading };

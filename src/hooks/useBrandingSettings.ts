@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { apiClient } from '@/lib/api';
 import hauseLogoDark from '@/assets/hause-logo-dark.png';
 import hauseLogoWhite from '@/assets/hause-logo-white.png';
 
@@ -17,50 +17,27 @@ export const useBrandingSettings = () => {
 
   useEffect(() => {
     const fetchSettings = async () => {
-      const { data, error } = await supabase
-        .from('site_settings')
-        .select('setting_value')
-        .eq('setting_key', 'branding')
-        .maybeSingle();
+      try {
+        const data = await apiClient.getSettings('branding') as any;
 
-      if (!error && data?.setting_value) {
-        const value = data.setting_value as Record<string, string>;
-        setSettings({
-          lightModeLogo: value.lightModeLogo || hauseLogoDark,
-          darkModeLogo: value.darkModeLogo || hauseLogoWhite,
-        });
+        if (data?.setting_value) {
+          const value = typeof data.setting_value === 'string' 
+            ? JSON.parse(data.setting_value) 
+            : data.setting_value;
+          
+          setSettings({
+            lightModeLogo: value.lightModeLogo || hauseLogoDark,
+            darkModeLogo: value.darkModeLogo || hauseLogoWhite,
+          });
+        }
+      } catch (err) {
+        console.warn('Branding settings fetch error, using defaults:', err);
+      } finally {
+        setIsLoading(false);
       }
-      setIsLoading(false);
     };
 
     fetchSettings();
-
-    // Subscribe to realtime updates
-    const channel = supabase
-      .channel('branding-settings')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'site_settings',
-          filter: 'setting_key=eq.branding',
-        },
-        (payload) => {
-          if (payload.new && 'setting_value' in payload.new) {
-            const value = payload.new.setting_value as Record<string, string>;
-            setSettings({
-              lightModeLogo: value.lightModeLogo || hauseLogoDark,
-              darkModeLogo: value.darkModeLogo || hauseLogoWhite,
-            });
-          }
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
   }, []);
 
   return { settings, isLoading };
