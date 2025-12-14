@@ -2,15 +2,19 @@
   RewriteEngine On
   RewriteBase /
 
-  # Force HTTPS for production (hause.ink)
-  RewriteCond %{HTTPS} off
-  RewriteRule ^(.*)$ https://hause.ink%{REQUEST_URI} [L,R=301]
-
   # Handle Authorization Header
   RewriteCond %{HTTP:Authorization} .
   RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
 
-  # Redirect Trailing Slashes
+  # Allow direct access to API files
+  RewriteCond %{REQUEST_URI} ^/api/ [NC]
+  RewriteRule ^ - [L]
+
+  # Allow direct access to uploads folder
+  RewriteCond %{REQUEST_URI} ^/uploads/ [NC]
+  RewriteRule ^ - [L]
+
+  # Redirect Trailing Slashes (if not a folder)
   RewriteCond %{REQUEST_FILENAME} !-d
   RewriteCond %{REQUEST_URI} (.+)/$
   RewriteRule ^ %1 [L,R=301]
@@ -49,18 +53,14 @@
   Header set X-Frame-Options "SAMEORIGIN"
   Header set X-XSS-Protection "1; mode=block"
   Header set Referrer-Policy "strict-origin-when-cross-origin"
-  Header set Permissions-Policy "geolocation=(), microphone=(), camera=()"
-  
-  # Content Security Policy (adjust as needed for your integrations)
-  # Header set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' https://connect.facebook.net https://www.googletagmanager.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https: blob:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://www.google-analytics.com;"
   
   # Cache Control for assets
   <FilesMatch "\.(js|css|png|jpg|jpeg|gif|webp|svg|woff|woff2|mp4|webm)$">
     Header set Cache-Control "public, max-age=31536000, immutable"
   </FilesMatch>
   
-  # No cache for HTML
-  <FilesMatch "\.(html)$">
+  # No cache for HTML and PHP
+  <FilesMatch "\.(html|php)$">
     Header set Cache-Control "no-cache, no-store, must-revalidate"
   </FilesMatch>
 </IfModule>
@@ -73,3 +73,12 @@ Options -Indexes
   Order allow,deny
   Deny from all
 </FilesMatch>
+
+# Allow cross-origin for API
+<IfModule mod_headers.c>
+  <FilesMatch "\.(php)$">
+    Header set Access-Control-Allow-Origin "*"
+    Header set Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
+    Header set Access-Control-Allow-Headers "Content-Type, Authorization"
+  </FilesMatch>
+</IfModule>

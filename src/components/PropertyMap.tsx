@@ -4,7 +4,8 @@ import 'mapbox-gl/dist/mapbox-gl.css';
 import { Property } from '@/types/property';
 import { Card } from '@/components/ui/card';
 import { Link } from 'react-router-dom';
-import { Bed, Maximize, MapPin } from 'lucide-react';
+import { Bed, Maximize, MapPin, AlertCircle } from 'lucide-react';
+import { apiClient } from '@/lib/api';
 
 interface PropertyMapProps {
   properties: Property[];
@@ -19,7 +20,7 @@ const cityCoordinates: Record<string, [number, number]> = {
   'utrecht': [5.1214, 52.0907],
   'eindhoven': [5.4697, 51.4416],
   'groningen': [6.5665, 53.2194],
-  'default': [4.8952, 52.3702], // Center of Netherlands
+  'default': [4.8952, 52.3702],
 };
 
 const PropertyMap = ({ properties, className }: PropertyMapProps) => {
@@ -28,56 +29,76 @@ const PropertyMap = ({ properties, className }: PropertyMapProps) => {
   const markersRef = useRef<mapboxgl.Marker[]>([]);
   const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
   const [mapboxToken, setMapboxToken] = useState<string>('');
-  const [showTokenInput, setShowTokenInput] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string>('');
 
   const getPropertyCoordinates = (property: Property): [number, number] => {
     const cityLower = property.city.toLowerCase();
     const coords = cityCoordinates[cityLower] || cityCoordinates['default'];
-    // Add small random offset to prevent overlapping markers
     const offset = () => (Math.random() - 0.5) * 0.02;
     return [coords[0] + offset(), coords[1] + offset()];
   };
 
+  // Load Mapbox token from settings
+  useEffect(() => {
+    const loadMapboxToken = async () => {
+      try {
+        const response = await apiClient.getSettings('mapbox_token') as { setting_value?: string };
+        if (response?.setting_value) {
+          setMapboxToken(response.setting_value);
+        }
+      } catch (err) {
+        console.log('No mapbox token configured');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    loadMapboxToken();
+  }, []);
+
   useEffect(() => {
     if (!mapContainer.current || !mapboxToken) return;
 
-    mapboxgl.accessToken = mapboxToken;
-    
-    map.current = new mapboxgl.Map({
-      container: mapContainer.current,
-      style: 'mapbox://styles/mapbox/light-v11',
-      center: cityCoordinates['default'],
-      zoom: 7,
-    });
-
-    map.current.addControl(
-      new mapboxgl.NavigationControl({ visualizePitch: true }),
-      'top-right'
-    );
-
-    // Add markers for each property
-    properties.forEach((property) => {
-      const coords = getPropertyCoordinates(property);
+    try {
+      mapboxgl.accessToken = mapboxToken;
       
-      // Create custom marker element
-      const el = document.createElement('div');
-      el.className = 'property-marker';
-      el.innerHTML = `
-        <div class="bg-primary text-primary-foreground px-2 py-1 rounded-md text-xs font-semibold shadow-lg cursor-pointer hover:scale-105 transition-transform">
-          €${property.price.toLocaleString()}
-        </div>
-      `;
-      
-      el.addEventListener('click', () => {
-        setSelectedProperty(property);
+      map.current = new mapboxgl.Map({
+        container: mapContainer.current,
+        style: 'mapbox://styles/mapbox/light-v11',
+        center: cityCoordinates['default'],
+        zoom: 7,
       });
 
-      const marker = new mapboxgl.Marker({ element: el })
-        .setLngLat(coords)
-        .addTo(map.current!);
+      map.current.addControl(
+        new mapboxgl.NavigationControl({ visualizePitch: true }),
+        'top-right'
+      );
 
-      markersRef.current.push(marker);
-    });
+      // Add markers for each property
+      properties.forEach((property) => {
+        const coords = getPropertyCoordinates(property);
+        
+        const el = document.createElement('div');
+        el.className = 'property-marker';
+        el.innerHTML = `
+          <div class="bg-primary text-primary-foreground px-2 py-1 rounded-md text-xs font-semibold shadow-lg cursor-pointer hover:scale-105 transition-transform">
+            €${property.price.toLocaleString()}
+          </div>
+        `;
+        
+        el.addEventListener('click', () => {
+          setSelectedProperty(property);
+        });
+
+        const marker = new mapboxgl.Marker({ element: el })
+          .setLngLat(coords)
+          .addTo(map.current!);
+
+        markersRef.current.push(marker);
+      });
+    } catch (err) {
+      setError('Failed to load map. Please check the Mapbox configuration.');
+    }
 
     return () => {
       markersRef.current.forEach(marker => marker.remove());
@@ -86,40 +107,35 @@ const PropertyMap = ({ properties, className }: PropertyMapProps) => {
     };
   }, [mapboxToken, properties]);
 
-  if (showTokenInput && !mapboxToken) {
+  if (isLoading) {
+    return (
+      <div className={`bg-muted/50 rounded-xl p-8 text-center animate-pulse ${className}`}>
+        <div className="w-12 h-12 mx-auto mb-4 bg-muted rounded-full" />
+        <div className="h-4 w-32 mx-auto bg-muted rounded" />
+      </div>
+    );
+  }
+
+  if (!mapboxToken || error) {
     return (
       <div className={`bg-muted/50 rounded-xl p-6 text-center ${className}`}>
-        <MapPin className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-        <h3 className="text-lg font-semibold mb-2 text-foreground">Enable Map View</h3>
-        <p className="text-sm text-muted-foreground mb-4">
-          Enter your Mapbox public token to view properties on the map.
-          Get one free at <a href="https://mapbox.com" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">mapbox.com</a>
+        <AlertCircle className="w-10 h-10 mx-auto mb-3 text-muted-foreground" />
+        <h3 className="text-base font-semibold mb-2 text-foreground">Map View Not Available</h3>
+        <p className="text-sm text-muted-foreground">
+          {error || 'Map view requires a Mapbox token. Please configure it in admin settings.'}
         </p>
-        <input
-          type="text"
-          placeholder="pk.eyJ1Ijo..."
-          className="w-full max-w-md px-4 py-2 rounded-lg border border-border bg-background text-foreground mb-3"
-          onChange={(e) => {
-            if (e.target.value.startsWith('pk.')) {
-              setMapboxToken(e.target.value);
-              setShowTokenInput(false);
-            }
-          }}
-        />
-        <p className="text-xs text-muted-foreground">Token will be saved for this session</p>
       </div>
     );
   }
 
   return (
     <div className={`relative ${className}`}>
-      <div ref={mapContainer} className="w-full h-[500px] md:h-[600px] rounded-xl overflow-hidden" />
+      <div ref={mapContainer} className="w-full h-[400px] md:h-[500px] rounded-xl overflow-hidden" />
       
-      {/* Property popup */}
       {selectedProperty && (
-        <Card className="absolute bottom-4 left-4 right-4 md:left-auto md:right-4 md:w-80 p-0 overflow-hidden shadow-lg animate-fade-in z-10">
+        <Card className="absolute bottom-3 left-3 right-3 md:left-auto md:right-3 md:w-72 p-0 overflow-hidden shadow-lg animate-fade-in z-10">
           <Link to={`/property/${selectedProperty.id}`} className="block">
-            <div className="relative h-32">
+            <div className="relative h-28">
               <img
                 src={selectedProperty.images?.[0] || selectedProperty.image}
                 alt={selectedProperty.title}
@@ -130,23 +146,22 @@ const PropertyMap = ({ properties, className }: PropertyMapProps) => {
                   e.preventDefault();
                   setSelectedProperty(null);
                 }}
-                className="absolute top-2 right-2 p-1.5 rounded-full bg-background/90 hover:bg-background"
+                className="absolute top-2 right-2 p-1 rounded-full bg-background/90 hover:bg-background text-sm"
               >
-                <span className="sr-only">Close</span>
                 ×
               </button>
-              <div className="absolute bottom-2 left-2 bg-background/95 px-2 py-1 rounded-md">
-                <span className="font-bold text-primary">€{selectedProperty.price.toLocaleString()}</span>
-                <span className="text-muted-foreground text-sm">/mo</span>
+              <div className="absolute bottom-2 left-2 bg-background/95 px-2 py-0.5 rounded-md">
+                <span className="font-bold text-primary text-sm">€{selectedProperty.price.toLocaleString()}</span>
+                <span className="text-muted-foreground text-xs">/mo</span>
               </div>
             </div>
-            <div className="p-3">
-              <h4 className="font-semibold text-foreground line-clamp-1">{selectedProperty.title}</h4>
-              <p className="text-sm text-muted-foreground flex items-center gap-1 mt-1">
+            <div className="p-2.5">
+              <h4 className="font-semibold text-foreground text-sm line-clamp-1">{selectedProperty.title}</h4>
+              <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
                 <MapPin className="w-3 h-3" />
                 {selectedProperty.location}, {selectedProperty.city}
               </p>
-              <div className="flex items-center gap-3 text-sm text-muted-foreground mt-2">
+              <div className="flex items-center gap-3 text-xs text-muted-foreground mt-1.5">
                 <span className="flex items-center gap-1">
                   <Maximize className="w-3 h-3" />
                   {selectedProperty.area}m²
