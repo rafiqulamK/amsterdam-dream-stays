@@ -30,36 +30,36 @@ const Header = () => {
   const currentLogo = theme === 'dark' ? branding.darkModeLogo : branding.lightModeLogo;
 
   return (
-    <header className="sticky top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-sm border-b border-border">
-      <nav className="container mx-auto px-4 py-3">
-        <div className="flex items-center justify-between gap-4">
+    <header className="sticky top-0 left-0 right-0 z-50 bg-background/98 backdrop-blur-sm border-b border-border">
+      <nav className="container mx-auto px-4 py-2.5">
+        <div className="flex items-center justify-between gap-3">
           {/* Logo */}
           <Link to="/" className="shrink-0">
             <img 
               src={currentLogo} 
               alt="Hause" 
-              className="h-8 w-auto transition-opacity duration-200"
+              className="h-7 w-auto transition-opacity duration-200"
             />
           </Link>
 
           {/* Search Bar - Desktop */}
-          <div className="hidden md:flex flex-1 max-w-lg mx-4">
+          <div className="hidden md:flex flex-1 max-w-md mx-3">
             <div className="relative w-full">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
-                placeholder="Find your next home now"
-                className="pl-10 h-10 bg-muted/50 border-border rounded-full text-sm"
+                placeholder="Search properties..."
+                className="pl-9 h-9 bg-muted/50 border-border rounded-full text-sm"
               />
             </div>
           </div>
 
           {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center gap-4">
+          <div className="hidden md:flex items-center gap-3">
             {navLinks.map((link) => (
               <Link
                 key={link.path}
                 to={link.path}
-                className={`text-sm font-medium transition-colors hover:text-primary ${
+                className={`text-sm font-medium transition-colors hover:text-primary px-1.5 ${
                   isActive(link.path) ? "text-primary" : "text-foreground"
                 }`}
               >

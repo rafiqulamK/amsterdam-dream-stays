@@ -3,7 +3,8 @@ import Header from "@/components/Header";
 import Hero from "@/components/Hero";
 import Footer from "@/components/Footer";
 import PropertyCard from "@/components/PropertyCard";
-import PropertyFilters, { PropertyFiltersState } from "@/components/PropertyFilters";
+import PropertyFilters, { PropertyFiltersState, ViewMode } from "@/components/PropertyFilters";
+import PropertyMap from "@/components/PropertyMap";
 import BlogSection from "@/components/BlogSection";
 import SectionReveal from "@/components/SectionReveal";
 import FloatingCTA from "@/components/FloatingCTA";
@@ -37,6 +38,7 @@ const features = [
 
 const Index = () => {
   const [showContactForm, setShowContactForm] = useState(false);
+  const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [filters, setFilters] = useState<PropertyFiltersState>({
     search: '',
     city: '',
@@ -69,12 +71,12 @@ const Index = () => {
         </div>
 
         {/* Featured Properties Section */}
-        <section id="properties" data-tour-target="properties" className="py-12">
+        <section id="properties" data-tour-target="properties" className="py-8 md:py-10">
           <div className="container mx-auto px-4">
             <SectionReveal>
-              <div className="mb-6">
-                <h2 className="text-2xl font-bold text-foreground mb-1">Find your new home</h2>
-                <p className="text-muted-foreground">Verified rentals available now in the Netherlands</p>
+              <div className="mb-4">
+                <h2 className="text-xl md:text-2xl font-bold text-foreground">Find your new home</h2>
+                <p className="text-sm text-muted-foreground">Verified rentals available now in the Netherlands</p>
               </div>
             </SectionReveal>
 
@@ -83,32 +85,38 @@ const Index = () => {
                 filters={filters}
                 onFiltersChange={setFilters}
                 cities={cities}
-                className="mb-6"
+                viewMode={viewMode}
+                onViewModeChange={setViewMode}
+                className="mb-4"
               />
             </SectionReveal>
             
             {isLoading ? (
-              <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-3">
                 {[1, 2, 3, 4].map((i) => (
-                  <div key={i} className="space-y-3">
-                    <Skeleton className="h-40 w-full rounded-lg" />
+                  <div key={i} className="space-y-2">
+                    <Skeleton className="h-36 w-full rounded-lg" />
                     <Skeleton className="h-4 w-3/4" />
                     <Skeleton className="h-4 w-1/2" />
                   </div>
                 ))}
               </div>
             ) : filteredProperties.length > 0 ? (
-              <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
-                {filteredProperties.map((property, idx) => (
-                  <SectionReveal key={property.id} delay={idx * 50} direction="up">
-                    <PropertyCard property={property} />
-                  </SectionReveal>
-                ))}
-              </div>
+              viewMode === 'list' ? (
+                <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-3">
+                  {filteredProperties.map((property, idx) => (
+                    <SectionReveal key={property.id} delay={idx * 30} direction="up">
+                      <PropertyCard property={property} />
+                    </SectionReveal>
+                  ))}
+                </div>
+              ) : (
+                <PropertyMap properties={filteredProperties} className="mt-2" />
+              )
             ) : (
               <SectionReveal>
-                <div className="text-center py-10 bg-muted/50 rounded-xl">
-                  <p className="text-muted-foreground">
+                <div className="text-center py-8 bg-muted/50 rounded-xl">
+                  <p className="text-muted-foreground text-sm">
                     {filters.search || filters.city || filters.bedrooms || filters.propertyType
                       ? "No properties match your filters. Try adjusting your search criteria."
                       : "No properties available at the moment. Check back soon!"}
@@ -116,7 +124,8 @@ const Index = () => {
                   {(filters.search || filters.city || filters.bedrooms || filters.propertyType) && (
                     <Button 
                       variant="outline" 
-                      className="mt-4"
+                      size="sm"
+                      className="mt-3"
                       onClick={() => setFilters({
                         search: '',
                         city: '',
@@ -136,23 +145,23 @@ const Index = () => {
         </section>
 
         {/* Features Section */}
-        <section data-tour-target="features" className="py-12 bg-muted/30">
+        <section data-tour-target="features" className="py-8 md:py-10 bg-muted/30">
           <div className="container mx-auto px-4">
             <SectionReveal>
-              <div className="text-center mb-8">
-                <h2 className="text-2xl font-bold text-foreground mb-1">What makes {contact.company_name} special?</h2>
-                <p className="text-muted-foreground">Discover the features that set us apart</p>
+              <div className="text-center mb-6">
+                <h2 className="text-xl md:text-2xl font-bold text-foreground">What makes {contact.company_name} special?</h2>
+                <p className="text-sm text-muted-foreground">Discover the features that set us apart</p>
               </div>
             </SectionReveal>
 
-            <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+            <div className="grid md:grid-cols-3 gap-4 max-w-4xl mx-auto">
               {features.map((feature, idx) => (
-                <SectionReveal key={idx} delay={100 + idx * 100}>
-                  <div className="text-center p-6 rounded-xl bg-background border border-border">
-                    <div className="w-12 h-12 mx-auto mb-4 rounded-xl bg-primary/10 flex items-center justify-center">
-                      <feature.icon className="w-6 h-6 text-primary" aria-label={feature.title} />
+                <SectionReveal key={idx} delay={80 + idx * 80}>
+                  <div className="text-center p-5 rounded-xl bg-background border border-border">
+                    <div className="w-10 h-10 mx-auto mb-3 rounded-lg bg-primary/10 flex items-center justify-center">
+                      <feature.icon className="w-5 h-5 text-primary" aria-label={feature.title} />
                     </div>
-                    <h3 className="text-lg font-semibold mb-2 text-foreground">{feature.title}</h3>
+                    <h3 className="text-base font-semibold mb-1.5 text-foreground">{feature.title}</h3>
                     <p className="text-muted-foreground text-sm">{feature.description}</p>
                   </div>
                 </SectionReveal>
@@ -162,12 +171,12 @@ const Index = () => {
         </section>
 
         {/* Blog/News Section */}
-        <section data-tour-target="blog" className="py-12">
+        <section data-tour-target="blog" className="py-8 md:py-10">
           <div className="container mx-auto px-4">
             <SectionReveal>
-              <div className="text-center mb-8">
-                <h2 className="text-2xl font-bold text-foreground mb-1">Stay informed</h2>
-                <p className="text-muted-foreground">Latest insights and updates from the rental market</p>
+              <div className="text-center mb-6">
+                <h2 className="text-xl md:text-2xl font-bold text-foreground">Stay informed</h2>
+                <p className="text-sm text-muted-foreground">Latest insights and updates from the rental market</p>
               </div>
             </SectionReveal>
           </div>
@@ -175,12 +184,12 @@ const Index = () => {
         </section>
 
         {/* Contact Section */}
-        <section id="contact" data-tour-target="contact" className="py-12 bg-muted/30">
+        <section id="contact" data-tour-target="contact" className="py-8 md:py-10 bg-muted/30">
           <div className="container mx-auto px-4">
             <SectionReveal>
-              <div className="text-center mb-8">
-                <h2 className="text-2xl font-bold text-foreground mb-1">We're here to help</h2>
-                <p className="text-muted-foreground">Have questions? Our team is ready to assist you in finding your perfect home.</p>
+              <div className="text-center mb-6">
+                <h2 className="text-xl md:text-2xl font-bold text-foreground">We're here to help</h2>
+                <p className="text-sm text-muted-foreground">Have questions? Our team is ready to assist you.</p>
               </div>
             </SectionReveal>
 
