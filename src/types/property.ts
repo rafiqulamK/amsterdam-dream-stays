@@ -13,4 +13,6 @@ export interface Property {
   amenities: string[];
   availableFrom: string;
   propertyType: string;
+  latitude?: number;
+  longitude?: number;
 }
