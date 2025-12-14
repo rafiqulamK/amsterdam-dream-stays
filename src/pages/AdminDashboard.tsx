@@ -1,13 +1,12 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
+import { apiClient } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
-import { Home, Users, Building2, MessageSquare, TrendingUp, Settings, LogOut, Loader2 } from 'lucide-react';
+import { Building2, Users, MessageSquare, TrendingUp, LogOut } from 'lucide-react';
 import Header from '@/components/Header';
 import AdminPropertiesManager from '@/components/admin/AdminPropertiesManager';
 import AdminBookingsManager from '@/components/admin/AdminBookingsManager';
@@ -45,19 +44,23 @@ const AdminDashboard = () => {
   }, [user, userRole, loading, navigate]);
 
   const fetchStats = async () => {
-    const [properties, bookings, leads, pending] = await Promise.all([
-      supabase.from('properties').select('id', { count: 'exact' }),
-      supabase.from('bookings').select('id', { count: 'exact' }),
-      supabase.from('leads').select('id', { count: 'exact' }),
-      supabase.from('properties').select('id', { count: 'exact' }).eq('status', 'pending')
-    ]);
-
-    setStats({
-      totalProperties: properties.count || 0,
-      totalBookings: bookings.count || 0,
-      totalLeads: leads.count || 0,
-      pendingProperties: pending.count || 0
-    });
+    try {
+      const data = await apiClient.getStats() as {
+        totalProperties?: number;
+        totalBookings?: number;
+        totalLeads?: number;
+        pendingProperties?: number;
+      };
+      
+      setStats({
+        totalProperties: data.totalProperties || 0,
+        totalBookings: data.totalBookings || 0,
+        totalLeads: data.totalLeads || 0,
+        pendingProperties: data.pendingProperties || 0
+      });
+    } catch (error) {
+      console.error('Failed to fetch stats:', error);
+    }
   };
 
   if (loading) {

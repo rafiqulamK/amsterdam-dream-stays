@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { apiClient } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -29,6 +29,8 @@ interface Property {
   amenities: string[];
   description: string;
   created_at: string;
+  latitude?: number;
+  longitude?: number;
 }
 
 const AdminPropertiesManager = ({ onUpdate }: { onUpdate: () => void }) => {
@@ -46,66 +48,60 @@ const AdminPropertiesManager = ({ onUpdate }: { onUpdate: () => void }) => {
   }, []);
 
   const fetchProperties = async () => {
-    const { data, error } = await supabase
-      .from('properties')
-      .select('*')
-      .order('created_at', { ascending: false });
-
-    if (error) {
+    try {
+      const data = await apiClient.getProperties() as any[];
+      const formattedProperties = data.map((p: any) => ({
+        ...p,
+        id: p.id?.toString(),
+        images: Array.isArray(p.images) ? p.images : JSON.parse(p.images || '[]'),
+        amenities: Array.isArray(p.amenities) ? p.amenities : JSON.parse(p.amenities || '[]'),
+      }));
+      setProperties(formattedProperties);
+    } catch (error) {
       toast({
         title: "Error",
         description: "Failed to fetch properties",
         variant: "destructive"
       });
-    } else {
-      setProperties(data || []);
     }
     setLoading(false);
   };
 
   const updateStatus = async (id: string, status: string) => {
-    const { error } = await supabase
-      .from('properties')
-      .update({ status })
-      .eq('id', id);
-
-    if (error) {
-      toast({
-        title: "Error",
-        description: "Failed to update property",
-        variant: "destructive"
-      });
-    } else {
+    try {
+      await apiClient.updateProperty(id, { status });
       toast({
         title: "Success",
         description: `Property ${status}`
       });
       fetchProperties();
       onUpdate();
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update property",
+        variant: "destructive"
+      });
     }
   };
 
   const deleteProperty = async (id: string) => {
     if (!confirm('Are you sure you want to delete this property?')) return;
     
-    const { error } = await supabase
-      .from('properties')
-      .delete()
-      .eq('id', id);
-
-    if (error) {
-      toast({
-        title: "Error",
-        description: "Failed to delete property",
-        variant: "destructive"
-      });
-    } else {
+    try {
+      await apiClient.deleteProperty(id);
       toast({
         title: "Success",
         description: "Property deleted"
       });
       fetchProperties();
       onUpdate();
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to delete property",
+        variant: "destructive"
+      });
     }
   };
 

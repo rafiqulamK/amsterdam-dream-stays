@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { apiClient } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -7,7 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
-import { X, Plus, Upload, Loader2, Image as ImageIcon } from 'lucide-react';
+import { X, Plus, Loader2, Image as ImageIcon, MapPin } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import VideoUploader from '@/components/VideoUploader';
 
@@ -28,6 +28,8 @@ interface Property {
   videos?: string[];
   status?: string;
   owner_id?: string;
+  latitude?: number;
+  longitude?: number;
 }
 
 interface AdminPropertyEditorProps {
@@ -39,6 +41,16 @@ interface AdminPropertyEditorProps {
 const PROPERTY_TYPES = ['Apartment', 'House', 'Studio', 'Room', 'Villa', 'Penthouse'];
 const CITIES = ['Amsterdam', 'Rotterdam', 'The Hague', 'Utrecht', 'Eindhoven', 'Groningen'];
 const COMMON_AMENITIES = ['WiFi', 'Parking', 'Balcony', 'Garden', 'Gym', 'Pool', 'Pet Friendly', 'Furnished', 'Washing Machine', 'Dishwasher', 'Air Conditioning', 'Heating'];
+
+// Default coordinates for Netherlands cities
+const cityCoordinates: Record<string, { lat: number; lng: number }> = {
+  'Amsterdam': { lat: 52.3676, lng: 4.9041 },
+  'Rotterdam': { lat: 51.9244, lng: 4.4777 },
+  'The Hague': { lat: 52.0705, lng: 4.3007 },
+  'Utrecht': { lat: 52.0907, lng: 5.1214 },
+  'Eindhoven': { lat: 51.4416, lng: 5.4697 },
+  'Groningen': { lat: 53.2194, lng: 6.5665 },
+};
 
 const AdminPropertyEditor = ({ property, onSave, onCancel }: AdminPropertyEditorProps) => {
   const { user } = useAuth();
@@ -65,6 +77,8 @@ const AdminPropertyEditor = ({ property, onSave, onCancel }: AdminPropertyEditor
     images: property?.images || [],
     videos: property?.videos || [],
     status: property?.status || 'approved',
+    latitude: property?.latitude,
+    longitude: property?.longitude,
   });
 
   const handleFileUpload = async (files: FileList | null) => {
@@ -78,25 +92,19 @@ const AdminPropertyEditor = ({ property, onSave, onCancel }: AdminPropertyEditor
     
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
-      const filePath = `properties/${fileName}`;
       
-      const { data, error } = await supabase.storage
-        .from('media')
-        .upload(filePath, file);
-      
-      if (error) {
+      try {
+        const result = await apiClient.uploadFile(file, 'properties') as { file_url?: string; url?: string };
+        const url = result.file_url || result.url;
+        if (url) {
+          uploadedUrls.push(url);
+        }
+      } catch (error) {
         toast({
           title: "Upload Error",
-          description: `Failed to upload ${file.name}: ${error.message}`,
+          description: `Failed to upload ${file.name}`,
           variant: "destructive"
         });
-      } else if (data) {
-        const { data: urlData } = supabase.storage
-          .from('media')
-          .getPublicUrl(filePath);
-        uploadedUrls.push(urlData.publicUrl);
       }
       
       setUploadProgress(((i + 1) / totalFiles) * 100);
@@ -118,6 +126,16 @@ const AdminPropertyEditor = ({ property, onSave, onCancel }: AdminPropertyEditor
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
+  };
+
+  const handleCityChange = (city: string) => {
+    const coords = cityCoordinates[city];
+    setFormData(prev => ({
+      ...prev,
+      city,
+      latitude: coords?.lat || prev.latitude,
+      longitude: coords?.lng || prev.longitude,
+    }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -151,23 +169,15 @@ const AdminPropertyEditor = ({ property, onSave, onCancel }: AdminPropertyEditor
         images: formData.images,
         videos: formData.videos,
         status: formData.status,
-        owner_id: property?.id ? undefined : user.id,
+        latitude: formData.latitude,
+        longitude: formData.longitude,
       };
 
       if (property?.id) {
-        const { error } = await supabase
-          .from('properties')
-          .update(propertyData)
-          .eq('id', property.id);
-        
-        if (error) throw error;
+        await apiClient.updateProperty(property.id, propertyData);
         toast({ title: "Success", description: "Property updated successfully" });
       } else {
-        const { error } = await supabase
-          .from('properties')
-          .insert({ ...propertyData, owner_id: user.id });
-        
-        if (error) throw error;
+        await apiClient.createProperty(propertyData);
         toast({ title: "Success", description: "Property created successfully" });
       }
 
@@ -232,7 +242,7 @@ const AdminPropertyEditor = ({ property, onSave, onCancel }: AdminPropertyEditor
 
         <div>
           <Label htmlFor="city">City *</Label>
-          <Select value={formData.city} onValueChange={(value) => setFormData({ ...formData, city: value })}>
+          <Select value={formData.city} onValueChange={handleCityChange}>
             <SelectTrigger>
               <SelectValue placeholder="Select city" />
             </SelectTrigger>
@@ -336,6 +346,41 @@ const AdminPropertyEditor = ({ property, onSave, onCancel }: AdminPropertyEditor
             </SelectContent>
           </Select>
         </div>
+      </div>
+
+      {/* Location Coordinates */}
+      <div>
+        <Label className="flex items-center gap-2 mb-2">
+          <MapPin className="w-4 h-4" />
+          Map Coordinates (Optional)
+        </Label>
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <Label htmlFor="latitude" className="text-xs text-muted-foreground">Latitude</Label>
+            <Input
+              id="latitude"
+              type="number"
+              step="any"
+              value={formData.latitude || ''}
+              onChange={(e) => setFormData({ ...formData, latitude: e.target.value ? Number(e.target.value) : undefined })}
+              placeholder="52.3676"
+            />
+          </div>
+          <div>
+            <Label htmlFor="longitude" className="text-xs text-muted-foreground">Longitude</Label>
+            <Input
+              id="longitude"
+              type="number"
+              step="any"
+              value={formData.longitude || ''}
+              onChange={(e) => setFormData({ ...formData, longitude: e.target.value ? Number(e.target.value) : undefined })}
+              placeholder="4.9041"
+            />
+          </div>
+        </div>
+        <p className="text-xs text-muted-foreground mt-1">
+          Coordinates are set automatically based on city. Fine-tune for exact property location.
+        </p>
       </div>
 
       {/* Amenities */}

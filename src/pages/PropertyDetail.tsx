@@ -1,6 +1,6 @@
 import { useParams, Link } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { apiClient } from "@/lib/api";
 import { properties as staticProperties } from "@/data/properties";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -50,34 +50,39 @@ const PropertyDetail = () => {
         return;
       }
 
-      const { data, error } = await supabase
-        .from('properties')
-        .select('*')
-        .eq('id', id)
-        .maybeSingle();
+      try {
+        const data = await apiClient.getProperty(id) as any;
 
-      if (data && !error) {
-        setProperty({
-          id: data.id,
-          title: data.title,
-          description: data.description,
-          price: data.price,
-          location: data.location,
-          city: data.city,
-          bedrooms: data.bedrooms,
-          bathrooms: data.bathrooms,
-          area: data.area,
-          propertyType: data.property_type,
-          amenities: data.amenities || [],
-          image: data.images?.[0] || '/placeholder.svg',
-          images: data.images || [],
-          videos: (data as any).videos || [],
-          availableFrom: data.available_from,
-        });
-      } else {
+        if (data && !data.error) {
+          setProperty({
+            id: data.id?.toString() || id,
+            title: data.title,
+            description: data.description,
+            price: Number(data.price),
+            location: data.location,
+            city: data.city,
+            bedrooms: Number(data.bedrooms),
+            bathrooms: Number(data.bathrooms),
+            area: Number(data.area),
+            propertyType: data.property_type,
+            amenities: Array.isArray(data.amenities) ? data.amenities : JSON.parse(data.amenities || '[]'),
+            image: Array.isArray(data.images) ? data.images[0] : (JSON.parse(data.images || '[]')[0] || '/placeholder.svg'),
+            images: Array.isArray(data.images) ? data.images : JSON.parse(data.images || '[]'),
+            videos: Array.isArray(data.videos) ? data.videos : JSON.parse(data.videos || '[]'),
+            availableFrom: data.available_from,
+            latitude: data.latitude ? Number(data.latitude) : undefined,
+            longitude: data.longitude ? Number(data.longitude) : undefined,
+          });
+        } else {
+          const staticProperty = staticProperties.find((p) => p.id === id);
+          setProperty(staticProperty ? { ...staticProperty, videos: [] } : null);
+        }
+      } catch (error) {
+        console.error('Failed to fetch property:', error);
         const staticProperty = staticProperties.find((p) => p.id === id);
         setProperty(staticProperty ? { ...staticProperty, videos: [] } : null);
       }
+      
       setLoading(false);
     };
 

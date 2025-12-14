@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { apiClient } from '@/lib/api';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -16,7 +16,7 @@ interface Booking {
   end_date: string;
   total_price: number;
   status: string;
-  properties: { title: string } | null;
+  property_title?: string;
 }
 
 const AdminBookingsManager = () => {
@@ -29,35 +29,32 @@ const AdminBookingsManager = () => {
   }, []);
 
   const fetchBookings = async () => {
-    const { data, error } = await supabase
-      .from('bookings')
-      .select('*, properties(title)')
-      .order('created_at', { ascending: false });
-
-    if (!error) {
-      setBookings(data || []);
+    try {
+      const data = await apiClient.getBookings() as any[];
+      setBookings(data.map((b: any) => ({
+        ...b,
+        id: b.id?.toString(),
+      })));
+    } catch (error) {
+      console.error('Failed to fetch bookings:', error);
     }
     setLoading(false);
   };
 
   const updateStatus = async (id: string, status: string) => {
-    const { error } = await supabase
-      .from('bookings')
-      .update({ status })
-      .eq('id', id);
-
-    if (error) {
-      toast({
-        title: "Error",
-        description: "Failed to update booking",
-        variant: "destructive"
-      });
-    } else {
+    try {
+      await apiClient.updateBooking(id, { status });
       toast({
         title: "Success",
         description: `Booking ${status}`
       });
       fetchBookings();
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update booking",
+        variant: "destructive"
+      });
     }
   };
 
@@ -103,7 +100,9 @@ const AdminBookingsManager = () => {
               <h3 className="text-xl font-semibold mb-2">{booking.guest_name}</h3>
               <p className="text-sm text-muted-foreground">{booking.guest_email}</p>
               <p className="text-sm text-muted-foreground">{booking.guest_phone}</p>
-              <p className="mt-2">Property: {booking.properties?.title}</p>
+              {booking.property_title && (
+                <p className="mt-2">Property: {booking.property_title}</p>
+              )}
               <p className="text-sm">
                 {format(new Date(booking.start_date), 'MMM dd, yyyy')} - {format(new Date(booking.end_date), 'MMM dd, yyyy')}
               </p>

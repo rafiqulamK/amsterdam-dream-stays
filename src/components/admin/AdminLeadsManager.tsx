@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { apiClient } from '@/lib/api';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -59,13 +59,14 @@ const AdminLeadsManager = () => {
   }, [leads, searchQuery, statusFilter, sourceFilter]);
 
   const fetchLeads = async () => {
-    const { data, error } = await supabase
-      .from('leads')
-      .select('*')
-      .order('created_at', { ascending: false });
-
-    if (!error) {
-      setLeads(data || []);
+    try {
+      const data = await apiClient.getLeads() as any[];
+      setLeads(data.map((l: any) => ({
+        ...l,
+        id: l.id?.toString(),
+      })));
+    } catch (error) {
+      console.error('Failed to fetch leads:', error);
     }
     setLoading(false);
   };
@@ -95,23 +96,19 @@ const AdminLeadsManager = () => {
   };
 
   const updateStatus = async (id: string, status: string) => {
-    const { error } = await supabase
-      .from('leads')
-      .update({ status })
-      .eq('id', id);
-
-    if (error) {
-      toast({
-        title: "Error",
-        description: "Failed to update lead",
-        variant: "destructive"
-      });
-    } else {
+    try {
+      await apiClient.updateLead(id, { status });
       toast({
         title: "Success",
         description: "Lead status updated"
       });
       fetchLeads();
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update lead",
+        variant: "destructive"
+      });
     }
   };
 
