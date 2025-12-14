@@ -1,6 +1,8 @@
 <?php
 require_once 'config.php';
 
+header('Content-Type: application/json');
+
 $method = $_SERVER['REQUEST_METHOD'];
 $action = $_GET['action'] ?? '';
 
@@ -43,32 +45,37 @@ function getProperties() {
     global $pdo;
 
     try {
-        $status = $_GET['status'] ?? 'approved';
-        $limit = (int)($_GET['limit'] ?? 50);
+        $status = $_GET['status'] ?? null;
+        $limit = min((int)($_GET['limit'] ?? 100), 100);
         $offset = (int)($_GET['offset'] ?? 0);
 
-        $stmt = $pdo->prepare("
-            SELECT p.*, u.full_name as owner_name
-            FROM properties p
-            LEFT JOIN users u ON p.owner_id = u.id
-            WHERE p.status = ?
-            ORDER BY p.created_at DESC
-            LIMIT ? OFFSET ?
-        ");
-        $stmt->execute([$status, $limit, $offset]);
+        $sql = "SELECT p.*, u.full_name as owner_name FROM properties p LEFT JOIN users u ON p.owner_id = u.id";
+        $params = [];
+        
+        // Filter by status for non-admin users
+        if (!isAdmin()) {
+            $sql .= " WHERE p.status = 'approved'";
+        } elseif ($status && $status !== 'all') {
+            $sql .= " WHERE p.status = ?";
+            $params[] = $status;
+        }
+        
+        $sql .= " ORDER BY p.created_at DESC LIMIT ? OFFSET ?";
+        $params[] = $limit;
+        $params[] = $offset;
+
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute($params);
         $properties = $stmt->fetchAll();
 
-        // Get total count
-        $stmt = $pdo->prepare("SELECT COUNT(*) as total FROM properties WHERE status = ?");
-        $stmt->execute([$status]);
-        $total = $stmt->fetch()['total'];
+        // Parse JSON fields
+        foreach ($properties as &$property) {
+            $property['images'] = json_decode($property['images'] ?? '[]', true) ?: [];
+            $property['videos'] = json_decode($property['videos'] ?? '[]', true) ?: [];
+            $property['amenities'] = json_decode($property['amenities'] ?? '[]', true) ?: [];
+        }
 
-        sendJsonResponse([
-            'properties' => $properties,
-            'total' => $total,
-            'limit' => $limit,
-            'offset' => $offset
-        ]);
+        echo json_encode($properties);
     } catch (Exception $e) {
         sendJsonResponse(['error' => 'Failed to fetch properties'], 500);
     }
@@ -96,7 +103,17 @@ function getProperty() {
             sendJsonResponse(['error' => 'Property not found'], 404);
         }
 
-        sendJsonResponse(['property' => $property]);
+        // Check access for non-approved properties
+        if ($property['status'] !== 'approved' && !isAdmin() && getCurrentUserId() != $property['owner_id']) {
+            sendJsonResponse(['error' => 'Access denied'], 403);
+        }
+
+        // Parse JSON fields
+        $property['images'] = json_decode($property['images'] ?? '[]', true) ?: [];
+        $property['videos'] = json_decode($property['videos'] ?? '[]', true) ?: [];
+        $property['amenities'] = json_decode($property['amenities'] ?? '[]', true) ?: [];
+
+        echo json_encode($property);
     } catch (Exception $e) {
         sendJsonResponse(['error' => 'Failed to fetch property'], 500);
     }
@@ -105,50 +122,62 @@ function getProperty() {
 function createProperty() {
     global $pdo;
 
-    if (!isset($_SESSION['user_id'])) {
+    if (!isAuthenticated()) {
         sendJsonResponse(['error' => 'Authentication required'], 401);
     }
 
+    if (!isTenant() && !isAdmin()) {
+        sendJsonResponse(['error' => 'Permission denied'], 403);
+    }
+
     $data = getJsonInput();
-    validateRequired($data, ['title', 'description', 'price', 'location', 'bedrooms', 'bathrooms', 'area']);
+
+    if (empty($data['title']) || empty($data['city']) || empty($data['property_type'])) {
+        sendJsonResponse(['error' => 'Title, city, and property type are required'], 400);
+    }
 
     try {
         $stmt = $pdo->prepare("
             INSERT INTO properties (
                 title, description, price, location, city, bedrooms, bathrooms, area,
-                property_type, available_from, amenities, images, videos, owner_id, status
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                property_type, available_from, amenities, images, videos, 
+                latitude, longitude, owner_id, status
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ");
+
+        $status = isAdmin() ? ($data['status'] ?? 'approved') : 'pending';
 
         $stmt->execute([
             $data['title'],
-            $data['description'],
-            $data['price'],
-            $data['location'],
-            $data['city'] ?? '',
-            $data['bedrooms'],
-            $data['bathrooms'],
-            $data['area'],
-            $data['property_type'] ?? 'apartment',
+            $data['description'] ?? '',
+            $data['price'] ?? 0,
+            $data['location'] ?? '',
+            $data['city'],
+            $data['bedrooms'] ?? 1,
+            $data['bathrooms'] ?? 1,
+            $data['area'] ?? 0,
+            $data['property_type'],
             $data['available_from'] ?? date('Y-m-d'),
             json_encode($data['amenities'] ?? []),
             json_encode($data['images'] ?? []),
             json_encode($data['videos'] ?? []),
-            $_SESSION['user_id'],
-            $data['status'] ?? 'pending'
+            $data['latitude'] ?? null,
+            $data['longitude'] ?? null,
+            getCurrentUserId(),
+            $status
         ]);
 
         $propertyId = $pdo->lastInsertId();
-        sendJsonResponse(['success' => true, 'property_id' => $propertyId]);
+        sendJsonResponse(['success' => true, 'id' => $propertyId, 'message' => 'Property created successfully']);
     } catch (Exception $e) {
-        sendJsonResponse(['error' => 'Failed to create property'], 500);
+        sendJsonResponse(['error' => 'Failed to create property: ' . $e->getMessage()], 500);
     }
 }
 
 function updateProperty() {
     global $pdo;
 
-    if (!isset($_SESSION['user_id'])) {
+    if (!isAuthenticated()) {
         sendJsonResponse(['error' => 'Authentication required'], 401);
     }
 
@@ -168,40 +197,56 @@ function updateProperty() {
             sendJsonResponse(['error' => 'Property not found'], 404);
         }
 
-        $isOwner = $property['owner_id'] == $_SESSION['user_id'];
-        $isAdmin = in_array($_SESSION['user_role'] ?? 'user', ['admin', 'superadmin']);
+        $isOwner = $property['owner_id'] == getCurrentUserId();
 
-        if (!$isOwner && !$isAdmin) {
+        if (!$isOwner && !isAdmin()) {
             sendJsonResponse(['error' => 'Permission denied'], 403);
         }
 
-        $stmt = $pdo->prepare("
-            UPDATE properties SET
-                title = ?, description = ?, price = ?, location = ?, city = ?,
-                bedrooms = ?, bathrooms = ?, area = ?, property_type = ?,
-                available_from = ?, amenities = ?, images = ?, videos = ?,
-                updated_at = NOW()
-            WHERE id = ?
-        ");
+        $fields = [];
+        $values = [];
+        
+        $allowedFields = [
+            'title', 'description', 'price', 'location', 'city', 'bedrooms', 
+            'bathrooms', 'area', 'property_type', 'available_from', 'status',
+            'latitude', 'longitude'
+        ];
+        
+        foreach ($allowedFields as $field) {
+            if (isset($data[$field])) {
+                $fields[] = "$field = ?";
+                $values[] = $data[$field];
+            }
+        }
+        
+        // Handle JSON fields
+        if (isset($data['amenities'])) {
+            $fields[] = "amenities = ?";
+            $values[] = json_encode($data['amenities']);
+        }
+        
+        if (isset($data['images'])) {
+            $fields[] = "images = ?";
+            $values[] = json_encode($data['images']);
+        }
+        
+        if (isset($data['videos'])) {
+            $fields[] = "videos = ?";
+            $values[] = json_encode($data['videos']);
+        }
 
-        $stmt->execute([
-            $data['title'] ?? $property['title'],
-            $data['description'] ?? $property['description'],
-            $data['price'] ?? $property['price'],
-            $data['location'] ?? $property['location'],
-            $data['city'] ?? $property['city'],
-            $data['bedrooms'] ?? $property['bedrooms'],
-            $data['bathrooms'] ?? $property['bathrooms'],
-            $data['area'] ?? $property['area'],
-            $data['property_type'] ?? $property['property_type'],
-            $data['available_from'] ?? $property['available_from'],
-            json_encode($data['amenities'] ?? json_decode($property['amenities'], true)),
-            json_encode($data['images'] ?? json_decode($property['images'], true)),
-            json_encode($data['videos'] ?? json_decode($property['videos'], true)),
-            $id
-        ]);
+        if (empty($fields)) {
+            sendJsonResponse(['error' => 'No fields to update'], 400);
+        }
 
-        sendJsonResponse(['success' => true]);
+        $fields[] = "updated_at = NOW()";
+        $values[] = $id;
+
+        $sql = "UPDATE properties SET " . implode(', ', $fields) . " WHERE id = ?";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute($values);
+
+        sendJsonResponse(['success' => true, 'message' => 'Property updated successfully']);
     } catch (Exception $e) {
         sendJsonResponse(['error' => 'Failed to update property'], 500);
     }
@@ -210,8 +255,8 @@ function updateProperty() {
 function deleteProperty() {
     global $pdo;
 
-    if (!isset($_SESSION['user_id'])) {
-        sendJsonResponse(['error' => 'Authentication required'], 401);
+    if (!isAdmin()) {
+        sendJsonResponse(['error' => 'Admin access required'], 403);
     }
 
     $id = $_GET['id'] ?? '';
@@ -220,26 +265,10 @@ function deleteProperty() {
     }
 
     try {
-        // Check ownership or admin permission
-        $stmt = $pdo->prepare("SELECT owner_id FROM properties WHERE id = ?");
-        $stmt->execute([$id]);
-        $property = $stmt->fetch();
-
-        if (!$property) {
-            sendJsonResponse(['error' => 'Property not found'], 404);
-        }
-
-        $isOwner = $property['owner_id'] == $_SESSION['user_id'];
-        $isAdmin = in_array($_SESSION['user_role'] ?? 'user', ['admin', 'superadmin']);
-
-        if (!$isOwner && !$isAdmin) {
-            sendJsonResponse(['error' => 'Permission denied'], 403);
-        }
-
         $stmt = $pdo->prepare("DELETE FROM properties WHERE id = ?");
         $stmt->execute([$id]);
 
-        sendJsonResponse(['success' => true]);
+        sendJsonResponse(['success' => true, 'message' => 'Property deleted successfully']);
     } catch (Exception $e) {
         sendJsonResponse(['error' => 'Failed to delete property'], 500);
     }
