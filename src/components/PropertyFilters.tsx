@@ -19,7 +19,7 @@ import {
 } from '@/components/ui/sheet';
 import { Slider } from '@/components/ui/slider';
 import { Badge } from '@/components/ui/badge';
-import { Search, SlidersHorizontal, X, MapPin, Bed, Euro, Home } from 'lucide-react';
+import { Search, SlidersHorizontal, X, MapPin, Bed, Euro, Home, List, Map } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export interface PropertyFiltersState {
@@ -31,11 +31,15 @@ export interface PropertyFiltersState {
   propertyType: string;
 }
 
+export type ViewMode = 'list' | 'map';
+
 interface PropertyFiltersProps {
   filters: PropertyFiltersState;
   onFiltersChange: (filters: PropertyFiltersState) => void;
   cities: string[];
   className?: string;
+  viewMode?: ViewMode;
+  onViewModeChange?: (mode: ViewMode) => void;
 }
 
 const defaultFilters: PropertyFiltersState = {
@@ -47,7 +51,7 @@ const defaultFilters: PropertyFiltersState = {
   propertyType: '',
 };
 
-const PropertyFilters = ({ filters, onFiltersChange, cities, className }: PropertyFiltersProps) => {
+const PropertyFilters = ({ filters, onFiltersChange, cities, className, viewMode = 'list', onViewModeChange }: PropertyFiltersProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [localFilters, setLocalFilters] = useState(filters);
 
@@ -80,22 +84,46 @@ const PropertyFilters = ({ filters, onFiltersChange, cities, className }: Proper
   };
 
   return (
-    <div className={cn("space-y-4", className)}>
-      {/* Search Bar */}
+    <div className={cn("space-y-3", className)}>
+      {/* Search Bar with View Toggle */}
       <div className="flex gap-2">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Search properties by name or location..."
+            placeholder="Search properties..."
             value={filters.search}
             onChange={(e) => handleSearchChange(e.target.value)}
-            className="pl-10"
+            className="pl-10 h-10"
           />
         </div>
         
+        {/* View Mode Toggle */}
+        {onViewModeChange && (
+          <div className="flex border border-border rounded-md overflow-hidden">
+            <Button
+              variant={viewMode === 'list' ? 'default' : 'ghost'}
+              size="sm"
+              className="rounded-none h-10 px-3"
+              onClick={() => onViewModeChange('list')}
+            >
+              <List className="h-4 w-4" />
+              <span className="hidden sm:inline ml-1.5">List</span>
+            </Button>
+            <Button
+              variant={viewMode === 'map' ? 'default' : 'ghost'}
+              size="sm"
+              className="rounded-none h-10 px-3"
+              onClick={() => onViewModeChange('map')}
+            >
+              <Map className="h-4 w-4" />
+              <span className="hidden sm:inline ml-1.5">Map</span>
+            </Button>
+          </div>
+        )}
+        
         <Sheet open={isOpen} onOpenChange={setIsOpen}>
           <SheetTrigger asChild>
-            <Button variant="outline" className="gap-2 relative">
+            <Button variant="outline" className="gap-2 relative h-10">
               <SlidersHorizontal className="h-4 w-4" />
               <span className="hidden sm:inline">Filters</span>
               {activeFilterCount > 0 && (
