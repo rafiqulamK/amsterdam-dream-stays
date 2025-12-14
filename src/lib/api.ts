@@ -93,10 +93,27 @@ class ApiClient {
     return this.request('/bookings.php?action=list');
   }
 
+  async getBooking(id: string) {
+    return this.request(`/bookings.php?action=single&id=${id}`);
+  }
+
   async createBooking(bookingData: any) {
     return this.request('/bookings.php?action=create', {
       method: 'POST',
       body: JSON.stringify(bookingData),
+    });
+  }
+
+  async updateBooking(id: string, bookingData: any) {
+    return this.request('/bookings.php?action=update', {
+      method: 'PUT',
+      body: JSON.stringify({ id, ...bookingData }),
+    });
+  }
+
+  async deleteBooking(id: string) {
+    return this.request(`/bookings.php?action=delete&id=${id}`, {
+      method: 'DELETE',
     });
   }
 
@@ -112,6 +129,23 @@ class ApiClient {
     return this.request('/leads.php?action=list');
   }
 
+  async getLead(id: string) {
+    return this.request(`/leads.php?action=single&id=${id}`);
+  }
+
+  async updateLead(id: string, leadData: any) {
+    return this.request('/leads.php?action=update', {
+      method: 'PUT',
+      body: JSON.stringify({ id, ...leadData }),
+    });
+  }
+
+  async deleteLead(id: string) {
+    return this.request(`/leads.php?action=delete&id=${id}`, {
+      method: 'DELETE',
+    });
+  }
+
   // Settings endpoints
   async getSettings(key: string) {
     return this.request(`/settings.php?action=get&key=${key}`);
@@ -122,6 +156,15 @@ class ApiClient {
       method: 'POST',
       body: JSON.stringify({ key, value }),
     });
+  }
+
+  async getAllSettings() {
+    return this.request('/settings.php?action=list');
+  }
+
+  // Statistics endpoints for dashboard
+  async getStats() {
+    return this.request('/stats.php?action=all');
   }
 
   // Media/Upload endpoints
@@ -142,9 +185,43 @@ class ApiClient {
     return data;
   }
 
-  // Get all settings
-  async getAllSettings() {
-    return this.request('/settings.php?action=list');
+  async getMedia() {
+    return this.request('/media.php?action=list');
+  }
+
+  async deleteMedia(id: string) {
+    return this.request(`/media.php?action=delete&id=${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  // Pages/CMS endpoints
+  async getPages() {
+    return this.request('/pages.php?action=list');
+  }
+
+  async getPage(slug: string) {
+    return this.request(`/pages.php?action=single&slug=${slug}`);
+  }
+
+  async createPage(pageData: any) {
+    return this.request('/pages.php?action=create', {
+      method: 'POST',
+      body: JSON.stringify(pageData),
+    });
+  }
+
+  async updatePage(id: string, pageData: any) {
+    return this.request('/pages.php?action=update', {
+      method: 'PUT',
+      body: JSON.stringify({ id, ...pageData }),
+    });
+  }
+
+  async deletePage(id: string) {
+    return this.request(`/pages.php?action=delete&id=${id}`, {
+      method: 'DELETE',
+    });
   }
 }
 

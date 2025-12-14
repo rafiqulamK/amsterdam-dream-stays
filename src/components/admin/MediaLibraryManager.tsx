@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { apiClient } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -40,15 +40,14 @@ const MediaLibraryManager = () => {
   }, []);
 
   const fetchMedia = async () => {
-    const { data, error } = await supabase
-      .from('media_library')
-      .select('*')
-      .order('created_at', { ascending: false });
-
-    if (error) {
+    try {
+      const data = await apiClient.getMedia() as any[];
+      setMedia(data.map((m: any) => ({
+        ...m,
+        id: m.id?.toString(),
+      })));
+    } catch (error) {
       console.error('Error fetching media:', error);
-    } else {
-      setMedia(data || []);
     }
     setLoading(false);
   };
@@ -60,43 +59,12 @@ const MediaLibraryManager = () => {
     setUploading(true);
 
     for (const file of Array.from(files)) {
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
-      const filePath = fileName;
-
-      // Upload to storage
-      const { error: uploadError } = await supabase.storage
-        .from('media')
-        .upload(filePath, file);
-
-      if (uploadError) {
+      try {
+        await apiClient.uploadFile(file, 'media');
+      } catch (error) {
         toast({
           title: "Upload Failed",
-          description: `Failed to upload ${file.name}: ${uploadError.message}`,
-          variant: "destructive"
-        });
-        continue;
-      }
-
-      // Get public URL
-      const { data: urlData } = supabase.storage
-        .from('media')
-        .getPublicUrl(filePath);
-
-      // Save to database
-      const { error: dbError } = await supabase
-        .from('media_library')
-        .insert({
-          file_name: file.name,
-          file_url: urlData.publicUrl,
-          file_type: file.type,
-          file_size: file.size,
-        });
-
-      if (dbError) {
-        toast({
-          title: "Error",
-          description: `Failed to save ${file.name} metadata`,
+          description: `Failed to upload ${file.name}`,
           variant: "destructive"
         });
       }
@@ -126,34 +94,19 @@ const MediaLibraryManager = () => {
   const handleDelete = async () => {
     if (!deleteId) return;
 
-    const item = media.find(m => m.id === deleteId);
-    if (!item) return;
-
-    // Extract file path from URL
-    const urlParts = item.file_url.split('/media/');
-    const filePath = urlParts[urlParts.length - 1];
-
-    // Delete from storage
-    await supabase.storage.from('media').remove([filePath]);
-
-    // Delete from database
-    const { error } = await supabase
-      .from('media_library')
-      .delete()
-      .eq('id', deleteId);
-
-    if (error) {
-      toast({
-        title: "Error",
-        description: "Failed to delete file",
-        variant: "destructive"
-      });
-    } else {
+    try {
+      await apiClient.deleteMedia(deleteId);
       toast({
         title: "Deleted",
         description: "File deleted successfully"
       });
       fetchMedia();
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to delete file",
+        variant: "destructive"
+      });
     }
 
     setDeleteId(null);
