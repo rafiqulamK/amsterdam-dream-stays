@@ -123,6 +123,29 @@ class ApiClient {
       body: JSON.stringify({ key, value }),
     });
   }
+
+  // Media/Upload endpoints
+  async uploadFile(file: File, folder: string = 'uploads') {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('folder', folder);
+    
+    const response = await fetch(`${API_BASE}/upload.php`, {
+      method: 'POST',
+      body: formData,
+    });
+    
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.error || 'Upload failed');
+    }
+    return data;
+  }
+
+  // Get all settings
+  async getAllSettings() {
+    return this.request('/settings.php?action=list');
+  }
 }
 
 export const apiClient = new ApiClient();
