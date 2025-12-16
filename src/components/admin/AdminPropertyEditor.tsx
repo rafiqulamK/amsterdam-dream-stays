@@ -348,13 +348,26 @@ const AdminPropertyEditor = ({ property, onSave, onCancel }: AdminPropertyEditor
         </div>
       </div>
 
-      {/* Location Coordinates */}
-      <div>
-        <Label className="flex items-center gap-2 mb-2">
+      {/* Location Picker */}
+      <div className="space-y-3">
+        <Label className="flex items-center gap-2">
           <MapPin className="w-4 h-4" />
-          Map Coordinates (Optional)
+          Property Location
         </Label>
-        <div className="grid grid-cols-2 gap-4">
+        
+        {/* Map Picker */}
+        <div className="rounded-lg overflow-hidden border border-border">
+          <iframe
+            width="100%"
+            height="200"
+            src={`https://www.openstreetmap.org/export/embed.html?bbox=${(formData.longitude || 4.9041) - 0.01}%2C${(formData.latitude || 52.3676) - 0.01}%2C${(formData.longitude || 4.9041) + 0.01}%2C${(formData.latitude || 52.3676) + 0.01}&layer=mapnik&marker=${formData.latitude || 52.3676}%2C${formData.longitude || 4.9041}`}
+            style={{ border: 0 }}
+            loading="lazy"
+            title="Property location preview"
+          />
+        </div>
+        
+        <div className="grid grid-cols-2 gap-3">
           <div>
             <Label htmlFor="latitude" className="text-xs text-muted-foreground">Latitude</Label>
             <Input
@@ -378,8 +391,8 @@ const AdminPropertyEditor = ({ property, onSave, onCancel }: AdminPropertyEditor
             />
           </div>
         </div>
-        <p className="text-xs text-muted-foreground mt-1">
-          Coordinates are set automatically based on city. Fine-tune for exact property location.
+        <p className="text-xs text-muted-foreground">
+          Auto-set from city. Use <a href={`https://www.openstreetmap.org/?#map=15/${formData.latitude || 52.37}/${formData.longitude || 4.9}`} target="_blank" rel="noopener noreferrer" className="text-primary underline">OpenStreetMap</a> to find exact coordinates.
         </p>
       </div>
 
