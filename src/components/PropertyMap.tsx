@@ -32,7 +32,12 @@ const PropertyMap = ({ properties, className }: PropertyMapProps) => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string>('');
 
-  const getPropertyCoordinates = (property: Property): [number, number] => {
+const getPropertyCoordinates = (property: Property): [number, number] => {
+    // Use actual coordinates if available
+    if (property.latitude && property.longitude) {
+      return [property.longitude, property.latitude];
+    }
+    // Fallback to city-based coordinates with small offset
     const cityLower = property.city.toLowerCase();
     const coords = cityCoordinates[cityLower] || cityCoordinates['default'];
     const offset = () => (Math.random() - 0.5) * 0.02;
