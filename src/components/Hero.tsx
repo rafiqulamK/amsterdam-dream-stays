@@ -61,19 +61,22 @@ const Hero = () => {
         <img
           src={backgroundImage}
           alt="Beautiful Amsterdam canal house interior"
-          className="w-full h-full object-cover"
+          className="w-full h-full object-cover animate-scale-in"
+          style={{ animationDuration: '1.5s' }}
         />
+        {/* Gradient overlay for better text readability */}
+        <div className="absolute inset-0 bg-gradient-to-r from-background/30 to-transparent" />
       </div>
 
       {/* Content Card - Right aligned */}
       <div className="container mx-auto px-4 relative z-10">
         <div className="flex justify-end">
-          <div className="bg-background/95 backdrop-blur-sm rounded-xl p-6 md:p-8 max-w-md w-full shadow-[var(--shadow-soft)] animate-fade-in">
+          <div className="bg-background/95 backdrop-blur-sm rounded-xl p-6 md:p-8 max-w-md w-full shadow-[var(--shadow-soft)] animate-fade-in-up">
             <h1 className="text-3xl md:text-4xl font-bold leading-tight mb-3 text-foreground">
               {settings.title}
             </h1>
             
-            <p className="text-muted-foreground mb-5 text-base">
+            <p className="text-muted-foreground mb-5 text-base animate-fade-in stagger-1">
               {settings.subtitle}
             </p>
 
@@ -112,7 +115,8 @@ const Hero = () => {
             {/* Primary CTA Button */}
             <Button 
               size="default" 
-              className="w-full gap-2"
+              variant="glow"
+              className="w-full gap-2 animate-fade-in stagger-2"
               onClick={() => setIsFormOpen(true)}
             >
               <Home className="w-4 h-4" />
