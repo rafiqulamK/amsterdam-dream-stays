@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Property } from '@/types/property';
 import { Card } from '@/components/ui/card';
 import { Link } from 'react-router-dom';
-import { Bed, Maximize, MapPin, ExternalLink } from 'lucide-react';
+import { Bed, Maximize, MapPin, ExternalLink, X } from 'lucide-react';
 
 interface PropertyMapProps {
   properties: Property[];
@@ -26,7 +26,6 @@ const PropertyMap = ({ properties, className }: PropertyMapProps) => {
   // Calculate bounding box from properties or use default Netherlands view
   const getBoundingBox = () => {
     if (properties.length === 0) {
-      // Default Netherlands bounding box
       return { minLng: 3.3, minLat: 50.7, maxLng: 7.2, maxLat: 53.6 };
     }
 
@@ -41,7 +40,7 @@ const PropertyMap = ({ properties, className }: PropertyMapProps) => {
     const lats = coords.map(c => c.lat);
     const lngs = coords.map(c => c.lng);
 
-    const padding = 0.5; // Add padding around markers
+    const padding = 0.5;
     return {
       minLng: Math.min(...lngs) - padding,
       minLat: Math.min(...lats) - padding,
@@ -55,8 +54,9 @@ const PropertyMap = ({ properties, className }: PropertyMapProps) => {
   const osmViewUrl = `https://www.openstreetmap.org/?#map=8/${(bbox.minLat + bbox.maxLat) / 2}/${(bbox.minLng + bbox.maxLng) / 2}`;
 
   return (
-    <div className={`relative ${className}`}>
-      <div className="w-full h-[400px] md:h-[500px] rounded-xl overflow-hidden border border-border">
+    <div className={`flex flex-col gap-4 ${className}`}>
+      {/* Map Container */}
+      <div className="relative w-full h-[300px] md:h-[400px] rounded-xl overflow-hidden border border-border">
         <iframe
           width="100%"
           height="100%"
@@ -65,64 +65,73 @@ const PropertyMap = ({ properties, className }: PropertyMapProps) => {
           loading="lazy"
           title="Property locations map"
         />
+        
+        {/* View larger map link */}
+        <a
+          href={osmViewUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="absolute bottom-3 right-3 bg-background px-3 py-1.5 rounded-md text-xs font-medium flex items-center gap-1.5 hover:bg-accent transition-colors shadow-md border border-border z-10"
+        >
+          <ExternalLink className="w-3 h-3" />
+          View Larger Map
+        </a>
       </div>
       
-      {/* Property list overlay */}
-      <div className="absolute top-3 left-3 max-h-[350px] overflow-y-auto">
-        <div className="flex flex-col gap-2">
-          {properties.slice(0, 5).map((property) => (
-            <button
-              key={property.id}
-              onClick={() => setSelectedProperty(selectedProperty?.id === property.id ? null : property)}
-              className="bg-primary text-primary-foreground px-3 py-1.5 rounded-md text-xs font-semibold shadow-lg hover:scale-105 transition-transform text-left"
-            >
-              €{property.price.toLocaleString()} - {property.city}
-            </button>
-          ))}
-        </div>
+      {/* Property Cards - Separate section below map */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+        {properties.slice(0, 5).map((property) => (
+          <button
+            key={property.id}
+            onClick={() => setSelectedProperty(selectedProperty?.id === property.id ? null : property)}
+            className={`p-3 rounded-lg text-left transition-all border ${
+              selectedProperty?.id === property.id 
+                ? 'bg-primary text-primary-foreground border-primary' 
+                : 'bg-card hover:bg-accent border-border'
+            }`}
+          >
+            <div className={`font-semibold text-sm ${selectedProperty?.id === property.id ? '' : 'text-primary'}`}>
+              €{property.price.toLocaleString()}
+            </div>
+            <div className={`text-xs mt-0.5 ${selectedProperty?.id === property.id ? 'text-primary-foreground/80' : 'text-muted-foreground'}`}>
+              {property.city}
+            </div>
+          </button>
+        ))}
       </div>
-
-      {/* View larger map link */}
-      <a
-        href={osmViewUrl}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="absolute bottom-3 right-3 bg-background/95 px-3 py-1.5 rounded-md text-xs font-medium flex items-center gap-1 hover:bg-background transition-colors shadow-md"
-      >
-        <ExternalLink className="w-3 h-3" />
-        View Larger Map
-      </a>
       
+      {/* Selected Property Detail */}
       {selectedProperty && (
-        <Card className="absolute bottom-3 left-3 right-3 md:left-auto md:right-16 md:w-72 p-0 overflow-hidden shadow-lg animate-fade-in z-10">
-          <Link to={`/property/${selectedProperty.id}`} className="block">
-            <div className="relative h-28">
+        <Card className="p-0 overflow-hidden shadow-lg animate-fade-in">
+          <Link to={`/property/${selectedProperty.id}`} className="flex flex-col sm:flex-row">
+            <div className="relative h-32 sm:h-auto sm:w-40 shrink-0">
               <img
                 src={selectedProperty.images?.[0] || selectedProperty.image}
                 alt={selectedProperty.title}
                 className="w-full h-full object-cover"
               />
-              <button 
-                onClick={(e) => {
-                  e.preventDefault();
-                  setSelectedProperty(null);
-                }}
-                className="absolute top-2 right-2 p-1 rounded-full bg-background/90 hover:bg-background text-sm"
-              >
-                ×
-              </button>
               <div className="absolute bottom-2 left-2 bg-background/95 px-2 py-0.5 rounded-md">
                 <span className="font-bold text-primary text-sm">€{selectedProperty.price.toLocaleString()}</span>
                 <span className="text-muted-foreground text-xs">/mo</span>
               </div>
             </div>
-            <div className="p-2.5">
-              <h4 className="font-semibold text-foreground text-sm line-clamp-1">{selectedProperty.title}</h4>
-              <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
+            <div className="p-3 flex-1 relative">
+              <button 
+                onClick={(e) => {
+                  e.preventDefault();
+                  setSelectedProperty(null);
+                }}
+                className="absolute top-2 right-2 p-1 rounded-full bg-muted hover:bg-accent"
+                aria-label="Close"
+              >
+                <X className="w-4 h-4" />
+              </button>
+              <h4 className="font-semibold text-foreground text-sm line-clamp-1 pr-6">{selectedProperty.title}</h4>
+              <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
                 <MapPin className="w-3 h-3" />
                 {selectedProperty.location}, {selectedProperty.city}
               </p>
-              <div className="flex items-center gap-3 text-xs text-muted-foreground mt-1.5">
+              <div className="flex items-center gap-4 text-xs text-muted-foreground mt-2">
                 <span className="flex items-center gap-1">
                   <Maximize className="w-3 h-3" />
                   {selectedProperty.area}m²
