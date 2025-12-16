@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { apiClient } from '@/lib/api';
 
 interface PixelSettings {
   pixel_id: string;
@@ -24,59 +24,17 @@ export const useFacebookPixel = () => {
 
   const fetchSettings = useCallback(async () => {
     try {
-      const { data, error } = await supabase
-        .from('site_settings')
-        .select('setting_value')
-        .eq('setting_key', 'facebook_pixel')
-        .maybeSingle();
-
-      if (error) {
-        console.warn('Failed to fetch Facebook Pixel settings:', error.message);
-        return;
-      }
-
-      if (data?.setting_value) {
-        const value = data.setting_value as unknown as { value: PixelSettings };
-        if (value?.value) {
-          setSettings(value.value);
-        }
+      const response = await apiClient.getSettings('facebook_pixel') as { setting_value?: { value: PixelSettings } };
+      if (response?.setting_value?.value) {
+        setSettings(response.setting_value.value);
       }
     } catch (err) {
-      console.warn('Facebook Pixel settings fetch error:', err);
+      console.log('Facebook Pixel settings not configured');
     }
   }, []);
 
   useEffect(() => {
     fetchSettings();
-
-    // Subscribe to realtime changes for instant updates
-    let channel: ReturnType<typeof supabase.channel> | null = null;
-    
-    try {
-      channel = supabase
-        .channel('facebook-pixel-changes')
-        .on(
-          'postgres_changes',
-          {
-            event: '*',
-            schema: 'public',
-            table: 'site_settings',
-            filter: 'setting_key=eq.facebook_pixel'
-          },
-          () => {
-            fetchSettings();
-          }
-        )
-        .subscribe();
-    } catch (err) {
-      console.warn('Failed to subscribe to Facebook Pixel changes:', err);
-    }
-
-    return () => {
-      if (channel) {
-        supabase.removeChannel(channel);
-      }
-    };
   }, [fetchSettings]);
 
   useEffect(() => {

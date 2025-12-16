@@ -1,13 +1,12 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
-import { useToast } from '@/hooks/use-toast';
-import { Save, Activity } from 'lucide-react';
-import type { Json } from '@/integrations/supabase/types';
+import { toast } from 'sonner';
+import { apiClient } from '@/lib/api';
+import { Save, Activity, Loader2, ExternalLink } from 'lucide-react';
 
 interface PixelSettings {
   pixel_id: string;
@@ -42,52 +41,53 @@ const eventLabels: Record<keyof Omit<PixelSettings, 'pixel_id' | 'enabled'>, str
 
 const FacebookPixelSettings = () => {
   const [settings, setSettings] = useState<PixelSettings>(defaultPixelSettings);
-  const [loading, setLoading] = useState(false);
-  const { toast } = useToast();
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     fetchSettings();
   }, []);
 
   const fetchSettings = async () => {
-    const { data } = await supabase
-      .from('site_settings')
-      .select('setting_value')
-      .eq('setting_key', 'facebook_pixel')
-      .maybeSingle();
-
-    if (data?.setting_value) {
-      const value = data.setting_value as unknown as { value: PixelSettings };
-      if (value?.value) {
-        setSettings({ ...defaultPixelSettings, ...value.value });
+    try {
+      const response = await apiClient.getSettings('facebook_pixel') as { setting_value?: { value: PixelSettings } };
+      if (response?.setting_value?.value) {
+        setSettings({ ...defaultPixelSettings, ...response.setting_value.value });
       }
+    } catch (error) {
+      console.log('Facebook Pixel settings not found, using defaults');
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleSave = async () => {
-    setLoading(true);
-    const { error } = await supabase
-      .from('site_settings')
-      .upsert([{
-        setting_key: 'facebook_pixel',
-        setting_value: { value: settings } as unknown as Json,
-        updated_at: new Date().toISOString()
-      }], { onConflict: 'setting_key' });
-
-    if (error) {
-      toast({
-        title: "Error",
-        description: "Failed to save Facebook Pixel settings",
-        variant: "destructive"
-      });
-    } else {
-      toast({
-        title: "Success",
-        description: "Facebook Pixel settings saved successfully"
-      });
+    if (settings.enabled && !settings.pixel_id.trim()) {
+      toast.error('Please enter a Facebook Pixel ID');
+      return;
     }
-    setLoading(false);
+
+    setSaving(true);
+    try {
+      await apiClient.updateSettings('facebook_pixel', { value: settings });
+      toast.success('Facebook Pixel settings saved successfully');
+    } catch (error) {
+      console.error('Error saving settings:', error);
+      toast.error('Failed to save settings');
+    } finally {
+      setSaving(false);
+    }
   };
+
+  if (loading) {
+    return (
+      <Card>
+        <CardContent className="flex items-center justify-center py-8">
+          <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card>
@@ -108,7 +108,16 @@ const FacebookPixelSettings = () => {
               placeholder="Enter your Facebook Pixel ID (e.g., 123456789012345)"
             />
             <p className="text-xs text-muted-foreground mt-1">
-              Find your Pixel ID in Facebook Events Manager
+              Find your Pixel ID in{' '}
+              <a
+                href="https://business.facebook.com/events_manager"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary hover:underline inline-flex items-center gap-1"
+              >
+                Meta Events Manager
+                <ExternalLink className="w-3 h-3" />
+              </a>
             </p>
           </div>
 
@@ -143,9 +152,31 @@ const FacebookPixelSettings = () => {
           </div>
         </div>
 
-        <Button onClick={handleSave} disabled={loading} className="w-full">
-          <Save className="mr-2 h-4 w-4" />
-          Save Pixel Settings
+        {/* Info Box */}
+        <div className="p-4 rounded-lg bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-900">
+          <h4 className="font-medium text-blue-900 dark:text-blue-100 mb-1">
+            How Facebook Pixel Works
+          </h4>
+          <ul className="text-sm text-blue-800 dark:text-blue-200 space-y-1">
+            <li>• Track visitor actions to measure ad effectiveness</li>
+            <li>• Build custom audiences for retargeting</li>
+            <li>• Optimize ads for conversions</li>
+            <li>• Events are sent automatically when enabled</li>
+          </ul>
+        </div>
+
+        <Button onClick={handleSave} disabled={saving} className="w-full">
+          {saving ? (
+            <>
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              Saving...
+            </>
+          ) : (
+            <>
+              <Save className="mr-2 h-4 w-4" />
+              Save Pixel Settings
+            </>
+          )}
         </Button>
       </CardContent>
     </Card>
