@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import { apiClient } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,10 +7,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
-import { X, Plus, Loader2, Image as ImageIcon, MapPin, Search } from 'lucide-react';
+import { X, Plus, Loader2, Image as ImageIcon, MapPin } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import VideoUploader from '@/components/VideoUploader';
-import { useGeocoding } from '@/hooks/useGeocoding';
 
 interface Property {
   id?: string;
@@ -57,14 +56,11 @@ const AdminPropertyEditor = ({ property, onSave, onCancel }: AdminPropertyEditor
   const { user } = useAuth();
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const { results: geoResults, loading: geoLoading, search: geoSearch, clearResults } = useGeocoding();
   
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [newImageUrl, setNewImageUrl] = useState('');
-  const [addressQuery, setAddressQuery] = useState('');
-  const [showGeoResults, setShowGeoResults] = useState(false);
   
   const [formData, setFormData] = useState<Property>({
     title: property?.title || '',
@@ -84,30 +80,6 @@ const AdminPropertyEditor = ({ property, onSave, onCancel }: AdminPropertyEditor
     latitude: property?.latitude,
     longitude: property?.longitude,
   });
-
-  // Debounced address search
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (addressQuery.length >= 3) {
-        geoSearch(addressQuery);
-        setShowGeoResults(true);
-      }
-    }, 300);
-    return () => clearTimeout(timer);
-  }, [addressQuery, geoSearch]);
-
-  const handleSelectAddress = (result: { lat: number; lng: number; displayName: string }) => {
-    setFormData(prev => ({
-      ...prev,
-      latitude: result.lat,
-      longitude: result.lng,
-      location: result.displayName.split(',').slice(0, 2).join(','),
-    }));
-    setAddressQuery('');
-    setShowGeoResults(false);
-    clearResults();
-    toast({ title: "Location updated", description: "Coordinates set from address" });
-  };
 
   const handleFileUpload = async (files: FileList | null) => {
     if (!files || files.length === 0) return;
@@ -383,44 +355,11 @@ const AdminPropertyEditor = ({ property, onSave, onCancel }: AdminPropertyEditor
           Property Location
         </Label>
         
-        {/* Address Search */}
-        <div className="relative">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input
-              value={addressQuery}
-              onChange={(e) => setAddressQuery(e.target.value)}
-              placeholder="Search address in Netherlands..."
-              className="pl-9"
-            />
-            {geoLoading && (
-              <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 animate-spin text-muted-foreground" />
-            )}
-          </div>
-          
-          {/* Search Results Dropdown */}
-          {showGeoResults && geoResults.length > 0 && (
-            <div className="absolute z-50 w-full mt-1 bg-popover border border-border rounded-lg shadow-lg max-h-48 overflow-y-auto">
-              {geoResults.map((result, idx) => (
-                <button
-                  key={idx}
-                  type="button"
-                  onClick={() => handleSelectAddress(result)}
-                  className="w-full px-3 py-2 text-left text-sm hover:bg-accent transition-colors border-b border-border last:border-0"
-                >
-                  <div className="font-medium text-foreground line-clamp-1">{result.displayName.split(',').slice(0, 2).join(',')}</div>
-                  <div className="text-xs text-muted-foreground line-clamp-1">{result.displayName}</div>
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-        
-        {/* Map Preview */}
+        {/* Map Picker */}
         <div className="rounded-lg overflow-hidden border border-border">
           <iframe
             width="100%"
-            height="180"
+            height="200"
             src={`https://www.openstreetmap.org/export/embed.html?bbox=${(formData.longitude || 4.9041) - 0.01}%2C${(formData.latitude || 52.3676) - 0.01}%2C${(formData.longitude || 4.9041) + 0.01}%2C${(formData.latitude || 52.3676) + 0.01}&layer=mapnik&marker=${formData.latitude || 52.3676}%2C${formData.longitude || 4.9041}`}
             style={{ border: 0 }}
             loading="lazy"
@@ -452,6 +391,9 @@ const AdminPropertyEditor = ({ property, onSave, onCancel }: AdminPropertyEditor
             />
           </div>
         </div>
+        <p className="text-xs text-muted-foreground">
+          Auto-set from city. Use <a href={`https://www.openstreetmap.org/?#map=15/${formData.latitude || 52.37}/${formData.longitude || 4.9}`} target="_blank" rel="noopener noreferrer" className="text-primary underline">OpenStreetMap</a> to find exact coordinates.
+        </p>
       </div>
 
       {/* Amenities */}

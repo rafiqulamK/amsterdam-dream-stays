@@ -48,13 +48,13 @@ const PropertyCard = ({ property }: PropertyCardProps) => {
   };
 
   return (
-    <Card className="group overflow-hidden bg-card border-border hover:shadow-[var(--shadow-hover)] hover:-translate-y-1 transition-all duration-300">
+    <Card className="group overflow-hidden bg-card border-border hover:shadow-[var(--shadow-hover)] transition-all duration-300">
       <Link to={`/property/${property.id}`}>
         <div className="relative overflow-hidden aspect-[16/10]">
           <img
             src={images[currentImageIndex]}
             alt={`${property.title} - ${property.propertyType} in ${property.city}`}
-            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
             loading="lazy"
           />
           
