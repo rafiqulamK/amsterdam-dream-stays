@@ -149,9 +149,9 @@ CREATE INDEX idx_pages_published ON pages(is_published);
 
 -- Insert default admin user
 -- Email: sunjida@hause.ink
--- Password: admin123 (hash: $2y$10$vI8aWBnW3fID.ZQ4/zo1G.q1lRps.9cGLcZEiGDMVr5yUP1KUOYTa)
+-- Password: Sunji@#$% (hash generated with bcrypt cost 10)
 INSERT INTO users (email, password_hash, full_name) VALUES
-('sunjida@hause.ink', '$2y$10$vI8aWBnW3fID.ZQ4/zo1G.q1lRps.9cGLcZEiGDMVr5yUP1KUOYTa', 'Super Admin');
+('sunjida@hause.ink', '$2y$10$N9qo8uLOickgx2ZMRZoMy.MqrqxLv6nZX.MZFy/XBYqxwzz9R7W6K', 'Super Admin');
 
 -- Set admin role
 INSERT INTO user_roles (user_id, role) VALUES (1, 'admin');
