@@ -49,7 +49,6 @@ const App = () => (
                   <Route path="/auth" element={<Auth />} />
                   <Route path="/admin" element={<AdminDashboard />} />
                   <Route path="/blog" element={<BlogPage />} />
-                  {/* Tenant route hidden */}
                   <Route path="/property/:id" element={<PropertyDetail />} />
                   <Route path="/page/:slug" element={<CMSPage />} />
                   {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
