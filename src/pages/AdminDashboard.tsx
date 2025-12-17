@@ -6,13 +6,14 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
-import { Building2, Users, MessageSquare, TrendingUp, LogOut } from 'lucide-react';
+import { Building2, Users, MessageSquare, TrendingUp, LogOut, Database } from 'lucide-react';
 import Header from '@/components/Header';
 import AdminPropertiesManager from '@/components/admin/AdminPropertiesManager';
 import AdminBookingsManager from '@/components/admin/AdminBookingsManager';
 import AdminLeadsManager from '@/components/admin/AdminLeadsManager';
 import AdminSettingsManager from '@/components/admin/AdminSettingsManager';
 import AdminAnalytics from '@/components/admin/AdminAnalytics';
+import BackupManager from '@/components/admin/BackupManager';
 import PageLoader from '@/components/PageLoader';
 
 const AdminDashboard = () => {
@@ -127,12 +128,16 @@ const AdminDashboard = () => {
         </div>
 
         <Tabs defaultValue="analytics" className="space-y-4">
-          <TabsList>
+          <TabsList className="flex-wrap h-auto gap-1">
             <TabsTrigger value="analytics">Analytics</TabsTrigger>
             <TabsTrigger value="properties">Properties</TabsTrigger>
             <TabsTrigger value="bookings">Bookings</TabsTrigger>
             <TabsTrigger value="leads">Leads</TabsTrigger>
             <TabsTrigger value="settings">Settings</TabsTrigger>
+            <TabsTrigger value="backup" className="flex items-center gap-1">
+              <Database className="w-3 h-3" />
+              Backup
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="analytics">
@@ -153,6 +158,10 @@ const AdminDashboard = () => {
 
           <TabsContent value="settings">
             <AdminSettingsManager />
+          </TabsContent>
+
+          <TabsContent value="backup">
+            <BackupManager />
           </TabsContent>
         </Tabs>
       </main>

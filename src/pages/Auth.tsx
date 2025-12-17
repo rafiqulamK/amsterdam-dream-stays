@@ -17,7 +17,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
-import { Home, Eye, EyeOff, Loader2, Mail, Lock, User } from 'lucide-react';
+import { Home, Eye, EyeOff, Loader2, Mail, Lock, User, ArrowLeft, CheckCircle } from 'lucide-react';
 
 // Zod schemas for validation
 const loginSchema = z.object({
@@ -36,14 +36,21 @@ const signupSchema = z.object({
     .regex(/[0-9]/, 'Password must contain a number'),
 });
 
+const resetSchema = z.object({
+  email: z.string().trim().email('Please enter a valid email address').max(255, 'Email too long'),
+});
+
 type LoginFormData = z.infer<typeof loginSchema>;
 type SignupFormData = z.infer<typeof signupSchema>;
+type ResetFormData = z.infer<typeof resetSchema>;
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
+  const [showReset, setShowReset] = useState(false);
+  const [resetSent, setResetSent] = useState(false);
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const { signIn, signUp, user } = useAuth();
+  const { signIn, signUp, resetPassword, user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -55,6 +62,11 @@ const Auth = () => {
   const signupForm = useForm<SignupFormData>({
     resolver: zodResolver(signupSchema),
     defaultValues: { fullName: '', email: '', password: '' },
+  });
+
+  const resetForm = useForm<ResetFormData>({
+    resolver: zodResolver(resetSchema),
+    defaultValues: { email: '' },
   });
 
   if (user) {
@@ -122,6 +134,123 @@ const Auth = () => {
       setLoading(false);
     }
   };
+
+  const handleResetPassword = async (data: ResetFormData) => {
+    setLoading(true);
+    try {
+      const { error, success } = await resetPassword(data.email);
+      if (error) {
+        toast({
+          title: "Reset Failed",
+          description: error.message,
+          variant: "destructive"
+        });
+      } else if (success) {
+        setResetSent(true);
+        toast({
+          title: "Email Sent",
+          description: "Check your inbox for password reset instructions."
+        });
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Password Reset View
+  if (showReset) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-hero p-4">
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-20 left-10 animate-float opacity-10">
+            <Home size={60} className="text-primary" />
+          </div>
+        </div>
+
+        <Card className="w-full max-w-md bg-card/95 backdrop-blur-sm shadow-card relative z-10 animate-fade-in-up">
+          <CardHeader className="text-center">
+            <Link to="/" className="inline-block group">
+              <CardTitle className="text-3xl font-bold text-primary transition-all duration-300 group-hover:scale-105">
+                Hause
+              </CardTitle>
+            </Link>
+            <CardDescription>Reset your password</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {resetSent ? (
+              <div className="text-center py-6 animate-fade-in">
+                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-green-500/10 flex items-center justify-center">
+                  <CheckCircle className="w-8 h-8 text-green-500" />
+                </div>
+                <h3 className="font-semibold text-lg mb-2">Check Your Email</h3>
+                <p className="text-muted-foreground text-sm mb-6">
+                  We've sent password reset instructions to your email address. Please check your inbox and spam folder.
+                </p>
+                <Button 
+                  variant="outline" 
+                  onClick={() => { setShowReset(false); setResetSent(false); }}
+                  className="w-full"
+                >
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  Back to Login
+                </Button>
+              </div>
+            ) : (
+              <Form {...resetForm}>
+                <form onSubmit={resetForm.handleSubmit(handleResetPassword)} className="space-y-4">
+                  <FormField
+                    control={resetForm.control}
+                    name="email"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="flex items-center gap-2">
+                          <Mail className="w-4 h-4" /> Email Address
+                        </FormLabel>
+                        <FormControl>
+                          <Input
+                            type="email"
+                            placeholder="your@email.com"
+                            autoComplete="email"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <Button type="submit" className="w-full" disabled={loading}>
+                    {loading ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Sending...
+                      </>
+                    ) : (
+                      'Send Reset Link'
+                    )}
+                  </Button>
+                  <Button 
+                    type="button"
+                    variant="ghost" 
+                    onClick={() => setShowReset(false)}
+                    className="w-full"
+                  >
+                    <ArrowLeft className="w-4 h-4 mr-2" />
+                    Back to Login
+                  </Button>
+                </form>
+              </Form>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-hero p-4">
@@ -208,6 +337,15 @@ const Auth = () => {
                       </FormItem>
                     )}
                   />
+                  <div className="flex justify-end">
+                    <button
+                      type="button"
+                      onClick={() => setShowReset(true)}
+                      className="text-sm text-primary hover:underline"
+                    >
+                      Forgot password?
+                    </button>
+                  </div>
                   <Button type="submit" className="w-full" disabled={loading}>
                     {loading ? (
                       <>
