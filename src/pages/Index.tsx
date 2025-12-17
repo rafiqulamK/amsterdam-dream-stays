@@ -4,7 +4,7 @@ import Hero from "@/components/Hero";
 import Footer from "@/components/Footer";
 import PropertyCard from "@/components/PropertyCard";
 import PropertyFilters, { PropertyFiltersState, ViewMode } from "@/components/PropertyFilters";
-import PropertyMap from "@/components/PropertyMap";
+import NetherlandsMap from "@/components/NetherlandsMap";
 import BlogSection from "@/components/BlogSection";
 import SectionReveal from "@/components/SectionReveal";
 import FloatingCTA from "@/components/FloatingCTA";
@@ -112,7 +112,11 @@ const Index = () => {
                 </div>
               ) : (
                 <SectionReveal direction="scale">
-                  <PropertyMap properties={filteredProperties} className="mt-4" />
+                  <NetherlandsMap 
+                    properties={filteredProperties} 
+                    onCitySelect={(city) => setFilters(prev => ({ ...prev, city }))}
+                    className="mt-4" 
+                  />
                 </SectionReveal>
               )
             ) : (
