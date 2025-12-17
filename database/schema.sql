@@ -1,8 +1,8 @@
--- Database schema for Amsterdam Dream Stays
--- Run this SQL to create the database structure
+-- Database schema for Hause.ink
+-- Run this SQL in your hause_inksun database via phpMyAdmin
+-- Database: hause_inksun (already exists on server)
 
-CREATE DATABASE IF NOT EXISTS amsterdam_dream_stays;
-USE amsterdam_dream_stays;
+USE hause_inksun;
 
 -- Users table
 CREATE TABLE users (
@@ -147,10 +147,11 @@ CREATE INDEX idx_user_roles_user ON user_roles(user_id);
 CREATE INDEX idx_pages_slug ON pages(slug);
 CREATE INDEX idx_pages_published ON pages(is_published);
 
--- Insert default admin user (password: Admin@123!)
--- Use this command to generate a new hash: php -r "echo password_hash('Admin@123!', PASSWORD_BCRYPT);"
+-- Insert default admin user
+-- Email: sunjida@hause.ink
+-- Password: admin123 (hash: $2y$10$vI8aWBnW3fID.ZQ4/zo1G.q1lRps.9cGLcZEiGDMVr5yUP1KUOYTa)
 INSERT INTO users (email, password_hash, full_name) VALUES
-('sunjida@hause.ink', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'Super Admin');
+('sunjida@hause.ink', '$2y$10$vI8aWBnW3fID.ZQ4/zo1G.q1lRps.9cGLcZEiGDMVr5yUP1KUOYTa', 'Super Admin');
 
 -- Set admin role
 INSERT INTO user_roles (user_id, role) VALUES (1, 'admin');

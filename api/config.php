@@ -1,21 +1,16 @@
 <?php
-// Database configuration for cPanel hosting
-// Update these values OR use environment variables
+// Database configuration for hause.ink cPanel hosting
+// CONFIGURED FOR: hause.ink
 
-// Try environment variables first, fallback to direct config
-$db_host = getenv('DB_HOST') ?: 'localhost';
-$db_name = getenv('DB_NAME') ?: 'amsterdam_dream_stays';
-$db_user = getenv('DB_USER') ?: 'root';
-$db_pass = getenv('DB_PASS') ?: '';
-
-define('DB_HOST', $db_host);
-define('DB_NAME', $db_name);
-define('DB_USER', $db_user);
-define('DB_PASS', $db_pass);
+// Direct database credentials for hause.ink
+define('DB_HOST', 'localhost');
+define('DB_NAME', 'hause_inksun');
+define('DB_USER', 'hause_sunjida');
+define('DB_PASS', 'Pjokjict4@#$%');
 define('DB_CHARSET', 'utf8mb4');
 
 // Site settings
-define('SITE_URL', getenv('SITE_URL') ?: 'https://yourdomain.com');
+define('SITE_URL', 'https://hause.ink');
 define('UPLOADS_DIR', __DIR__ . '/../uploads/');
 define('UPLOADS_URL', '/uploads/');
 
